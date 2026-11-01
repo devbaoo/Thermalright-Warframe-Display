@@ -52,15 +52,26 @@ type Processor struct {
 	frames  []ProcessedFrame
 	fontVal font.Face
 	fontLbl font.Face
+
+	// Zero-allocation overlay cache & scratch buffers
+	cacheMu       sync.Mutex
+	lastCacheKey  string
+	cachedPreview image.Image
+	cachedRGB565  []byte
+	scratchCanvas *image.RGBA
+	scratchHw     *image.RGBA
+	scratchRGB565 []byte
 }
 
 func NewProcessor() *Processor {
 	p := &Processor{
-		mountMode:   "landscape",
-		rotation:    0,
-		fitMode:     "fill",
-		brightness:  1.0,
-		fpsOverride: 20,
+		mountMode:     "landscape",
+		rotation:      0,
+		fitMode:       "fill",
+		brightness:    1.0,
+		fpsOverride:   20,
+		scratchRGB565: make([]byte, PayloadSize),
+		cachedRGB565:  make([]byte, PayloadSize),
 	}
 	p.initFonts()
 	return p
@@ -99,6 +110,12 @@ func (p *Processor) initFonts() {
 			}
 		}
 	}
+}
+
+func (p *Processor) invalidateCache() {
+	p.cacheMu.Lock()
+	p.lastCacheKey = ""
+	p.cacheMu.Unlock()
 }
 
 func (p *Processor) LoadFile(filePath string, rot int, fit string, bri float64, fps int, mount string) error {
@@ -176,7 +193,7 @@ func (p *Processor) LoadFile(filePath string, rot int, fit string, bri float64, 
 		rgba := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 		draw.Draw(rgba, rgba.Bounds(), img, b.Min, draw.Src)
 		origs = append(origs, rgba)
-		durs = append(durs, 50) // 50ms keepalive for static images
+		durs = append(durs, 50)
 		animated = false
 	}
 
@@ -396,11 +413,9 @@ func (p *Processor) mapViewToHardware(viewImg *image.RGBA) *image.RGBA {
 	return hw
 }
 
-func (p *Processor) rgbaToRGB565(img *image.RGBA) []byte {
-	buf := make([]byte, PayloadSize)
+func (p *Processor) fillRGB565(img *image.RGBA, buf []byte) {
 	b := p.brightness
 	idx := 0
-
 	w := img.Bounds().Dx()
 	h := img.Bounds().Dy()
 
@@ -420,14 +435,21 @@ func (p *Processor) rgbaToRGB565(img *image.RGBA) []byte {
 			buf[idx+1] = byte(v >> 8)
 			idx += 2
 			if idx >= PayloadSize {
-				return buf
+				return
 			}
 		}
 	}
+}
+
+func (p *Processor) rgbaToRGB565(img *image.RGBA) []byte {
+	buf := make([]byte, PayloadSize)
+	p.fillRGB565(img, buf)
 	return buf
 }
 
 func (p *Processor) reprocessFrames() {
+	p.invalidateCache()
+
 	p.mu.RLock()
 	origs := make([]*image.RGBA, len(p.origFrames))
 	copy(origs, p.origFrames)
@@ -497,9 +519,22 @@ func (p *Processor) RenderOverlayFrame(idx int, cpuUsage, gpuTemp, ramUsage floa
 		return frame.PreviewImage, frame.RGB565Bytes
 	}
 
-	// Clone view image for overlay
-	canvas := image.NewRGBA(viewBase.Bounds())
-	copy(canvas.Pix, viewBase.Pix)
+	cacheKey := fmt.Sprintf("%d_%d_%d_%d_%s_%s_%.2f_%s", idx, int(cpuUsage), int(gpuTemp), int(ramUsage), pos, style, p.brightness, p.mountMode)
+	p.cacheMu.Lock()
+	defer p.cacheMu.Unlock()
+
+	// High-performance cache hit: 0 allocations, 0 CPU math!
+	if cacheKey == p.lastCacheKey && p.cachedPreview != nil && len(p.cachedRGB565) == PayloadSize {
+		return p.cachedPreview, p.cachedRGB565
+	}
+
+	// Zero-allocation scratch canvas reuse
+	b := viewBase.Bounds()
+	if p.scratchCanvas == nil || p.scratchCanvas.Bounds() != b {
+		p.scratchCanvas = image.NewRGBA(b)
+	}
+	copy(p.scratchCanvas.Pix, viewBase.Pix)
+	canvas := p.scratchCanvas
 
 	w := canvas.Bounds().Dx()
 	h := canvas.Bounds().Dy()
@@ -570,9 +605,44 @@ func (p *Processor) RenderOverlayFrame(idx int, cpuUsage, gpuTemp, ramUsage floa
 		}
 	}
 
-	hw := p.mapViewToHardware(canvas)
-	rgb565 := p.rgbaToRGB565(hw)
-	return canvas, rgb565
+	// Zero-allocation hardware mapping into scratchHw
+	if p.scratchHw == nil || p.scratchHw.Bounds().Dx() != PanelW || p.scratchHw.Bounds().Dy() != PanelH {
+		p.scratchHw = image.NewRGBA(image.Rect(0, 0, PanelW, PanelH))
+	}
+
+	if p.mountMode == "portrait" {
+		if canvas.Bounds().Dx() == PanelW && canvas.Bounds().Dy() == PanelH {
+			copy(p.scratchHw.Pix, canvas.Pix)
+		} else {
+			xdraw.BiLinear.Scale(p.scratchHw, p.scratchHw.Bounds(), canvas, canvas.Bounds(), xdraw.Over, nil)
+		}
+	} else {
+		// Landscape (320x240) -> 90° clockwise maps to 240x320 physical LCD
+		for cy := 0; cy < h; cy++ {
+			for cx := 0; cx < w; cx++ {
+				p.scratchHw.SetRGBA(h-1-cy, cx, canvas.RGBAAt(cx, cy))
+			}
+		}
+	}
+
+	// Zero-allocation RGB565 packing
+	if len(p.scratchRGB565) != PayloadSize {
+		p.scratchRGB565 = make([]byte, PayloadSize)
+	}
+	p.fillRGB565(p.scratchHw, p.scratchRGB565)
+
+	// Update cached results
+	if len(p.cachedRGB565) != PayloadSize {
+		p.cachedRGB565 = make([]byte, PayloadSize)
+	}
+	copy(p.cachedRGB565, p.scratchRGB565)
+
+	previewClone := image.NewRGBA(canvas.Bounds())
+	copy(previewClone.Pix, canvas.Pix)
+	p.cachedPreview = previewClone
+	p.lastCacheKey = cacheKey
+
+	return p.cachedPreview, p.cachedRGB565
 }
 
 func (p *Processor) drawText(dst *image.RGBA, x, y int, text string, col color.Color, face font.Face) {
@@ -602,7 +672,6 @@ func drawFastRoundedRect(dst *image.RGBA, x0, y0, x1, y1, radius int, fill, bord
 
 	for y := y0; y <= y1; y++ {
 		for x := x0; x <= x1; x++ {
-			// Fast rounded corner check
 			if x < x0+radius && y < y0+radius {
 				dx := x - (x0 + radius)
 				dy := y - (y0 + radius)

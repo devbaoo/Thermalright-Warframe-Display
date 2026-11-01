@@ -1250,13 +1250,49 @@
       });
     }
 
-    // Refresh live screen frame
+    // Intelligent power-saving live preview
+    let previewTimer = null;
+    let statusTimer = null;
+
     function refreshLiveFeed() {
+      if (document.hidden) return;
       const img = document.getElementById('livePreview');
-      img.src = '/api/preview?t=' + Date.now();
+      if (img) {
+        img.src = '/api/preview?t=' + Date.now();
+      }
     }
-    setInterval(refreshLiveFeed, 100);
-    setInterval(updateStatus, 1500);
+
+    function startLoops() {
+      if (!previewTimer) {
+        previewTimer = setInterval(refreshLiveFeed, 120);
+      }
+      if (!statusTimer) {
+        statusTimer = setInterval(updateStatus, 2000);
+      }
+    }
+
+    function stopLoops() {
+      if (previewTimer) {
+        clearInterval(previewTimer);
+        previewTimer = null;
+      }
+      if (statusTimer) {
+        clearInterval(statusTimer);
+        statusTimer = null;
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopLoops();
+      } else {
+        refreshLiveFeed();
+        updateStatus();
+        startLoops();
+      }
+    });
+
+    startLoops();
     updateStatus();
 
     // Mount Orientation change (Hardware Mounting geometry)

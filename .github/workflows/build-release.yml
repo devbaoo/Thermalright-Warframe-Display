@@ -51,3 +51,4 @@ jobs:
           files: |
             ThermalrightWarframe.exe
             Thermalright-Warframe-Display-${{ github.ref_name }}-windows-amd64.zip
+

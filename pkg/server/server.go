@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"sync"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"thermalright-warframe/pkg/config"
@@ -34,6 +35,7 @@ type Server struct {
 
 	mu             sync.RWMutex
 	currentPreview []byte
+	lastPreviewReq time.Time
 }
 
 func NewServer(
@@ -47,14 +49,15 @@ func NewServer(
 	onOpenWindow func(),
 ) *Server {
 	s := &Server{
-		driver:       driver,
-		processor:    processor,
-		monitor:      monitor,
-		cfgMgr:       cfgMgr,
-		port:         port,
-		webFS:        webFS,
-		assetsFS:     assetsFS,
-		onOpenWindow: onOpenWindow,
+		driver:         driver,
+		processor:      processor,
+		monitor:        monitor,
+		cfgMgr:         cfgMgr,
+		port:           port,
+		webFS:          webFS,
+		assetsFS:       assetsFS,
+		onOpenWindow:   onOpenWindow,
+		lastPreviewReq: time.Now(),
 	}
 	return s
 }
@@ -63,8 +66,17 @@ func (s *Server) SetPreviewImage(img image.Image) {
 	if img == nil {
 		return
 	}
+	s.mu.RLock()
+	lastReq := s.lastPreviewReq
+	s.mu.RUnlock()
+
+	// Skip CPU-intensive JPEG compression when no client is actively requesting the preview
+	if time.Since(lastReq) > 3*time.Second {
+		return
+	}
+
 	var buf bytes.Buffer
-	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 85}); err == nil {
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 70}); err == nil {
 		s.mu.Lock()
 		s.currentPreview = buf.Bytes()
 		s.mu.Unlock()
@@ -185,9 +197,10 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePreview(w http.ResponseWriter, r *http.Request) {
-	s.mu.RLock()
+	s.mu.Lock()
+	s.lastPreviewReq = time.Now()
 	data := s.currentPreview
-	s.mu.RUnlock()
+	s.mu.Unlock()
 
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")

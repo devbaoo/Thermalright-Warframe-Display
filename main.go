@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -30,7 +32,24 @@ const (
 	Port = 28765
 )
 
+var (
+	modKernel32                  = syscall.NewLazyDLL("kernel32.dll")
+	procGetCurrentProcess        = modKernel32.NewProc("GetCurrentProcess")
+	procSetProcessWorkingSetSize = modKernel32.NewProc("SetProcessWorkingSetSize")
+)
+
+func trimProcessMemory() {
+	runtime.GC()
+	debug.FreeOSMemory()
+	h, _, _ := procGetCurrentProcess.Call()
+	procSetProcessWorkingSetSize.Call(h, ^uintptr(0), ^uintptr(0))
+}
+
 func main() {
+	// Optimize Go runtime for low-memory desktop utility
+	debug.SetGCPercent(50)
+	debug.SetMemoryLimit(24 * 1024 * 1024)
+
 	minimized := flag.Bool("minimized", false, "Start minimized to background")
 	flag.Parse()
 
@@ -71,7 +90,7 @@ func main() {
 		log.Println("[App] Hardware display not immediately detected. Background loop will keep retrying...")
 	}
 
-	mon := monitor.NewMonitor(1500 * time.Millisecond)
+	mon := monitor.NewMonitor(2000 * time.Millisecond)
 	mon.Start()
 	defer mon.Stop()
 
@@ -85,6 +104,7 @@ func main() {
 	if fileExists(initialFile) {
 		_ = processor.LoadFile(initialFile, cfg.Rotation, cfg.FitMode, cfg.Brightness, cfg.FPSOverride, cfg.MountMode)
 	}
+	trimProcessMemory()
 
 	// 4. Setup embedded file systems
 	webSub, err := fs.Sub(embeddedWeb, "web")
@@ -157,6 +177,7 @@ func runDisplayLoop(
 	lastWebPreview := time.Now()
 	lastReconnectAttempt := time.Now()
 	lastFrameAdvance := time.Now()
+	lastMemTrim := time.Now()
 
 	for {
 		select {
@@ -165,14 +186,14 @@ func runDisplayLoop(
 		default:
 			totalFrames := processor.FrameCount()
 			if totalFrames == 0 {
-				time.Sleep(50 * time.Millisecond)
+				time.Sleep(100 * time.Millisecond)
 				continue
 			}
 
 			cfg := cfgMgr.Get()
 			frame := processor.GetFrame(frameIdx)
 			if frame == nil {
-				time.Sleep(50 * time.Millisecond)
+				time.Sleep(100 * time.Millisecond)
 				continue
 			}
 
@@ -209,7 +230,7 @@ func runDisplayLoop(
 				driver.SendFrame(rgb565)
 			}
 
-			// 2. Update web preview at ~10 FPS
+			// 2. Update web preview at ~10 FPS (skipped inside srv if UI window not active)
 			if time.Since(lastWebPreview) >= 100*time.Millisecond {
 				lastWebPreview = time.Now()
 				if previewImg != nil {
@@ -217,7 +238,13 @@ func runDisplayLoop(
 				}
 			}
 
-			// 3. Advance frame index when frame duration has elapsed
+			// 3. Periodic memory release back to OS
+			if time.Since(lastMemTrim) >= 20*time.Second {
+				lastMemTrim = time.Now()
+				trimProcessMemory()
+			}
+
+			// 4. Advance frame index when frame duration has elapsed
 			if totalFrames > 1 {
 				if time.Since(lastFrameAdvance) >= time.Duration(durMS)*time.Millisecond {
 					frameIdx = (frameIdx + 1) % totalFrames
@@ -227,11 +254,16 @@ func runDisplayLoop(
 				frameIdx = 0
 			}
 
-			// 4. Keep-alive sleep: stream at 20 FPS (50ms) to ensure hardware watchdog never resets,
-			// or faster if animated GIF specifies lower frame duration.
-			streamDelay := 50 * time.Millisecond
-			if totalFrames > 1 && durMS > 0 && durMS < 50 && durMS >= 15 {
-				streamDelay = time.Duration(durMS) * time.Millisecond
+			// 5. Intelligent pacing:
+			// For static images: 100ms (10 FPS) easily satisfies hardware watchdog (~2s) at minimal CPU.
+			// For animations: match frame duration or 50ms (20 FPS).
+			streamDelay := 100 * time.Millisecond
+			if totalFrames > 1 {
+				if durMS >= 15 && durMS < 100 {
+					streamDelay = time.Duration(durMS) * time.Millisecond
+				} else {
+					streamDelay = 50 * time.Millisecond
+				}
 			}
 			time.Sleep(streamDelay)
 		}

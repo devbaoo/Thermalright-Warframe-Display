@@ -1,10 +1,6 @@
 package monitor
 
 import (
-	"bytes"
-	"os/exec"
-	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -38,6 +34,11 @@ type memoryStatusEx struct {
 	AvailExtendedVirtual uint64
 }
 
+type nvmlUtilization struct {
+	GPU    uint32
+	Memory uint32
+}
+
 type Stats struct {
 	CPUUsage float64 `json:"cpu_usage"`
 	RAMUsage float64 `json:"ram_usage"`
@@ -57,16 +58,52 @@ type Monitor struct {
 	prevIdle   uint64
 	prevKernel uint64
 	prevUser   uint64
+
+	// Direct NVML bindings for 0% CPU GPU telemetry (no child processes)
+	nvmlLoaded bool
+	nvmlDev    uintptr
+	pGetTemp   *syscall.LazyProc
+	pGetUtil   *syscall.LazyProc
 }
 
 func NewMonitor(interval time.Duration) *Monitor {
 	if interval <= 0 {
-		interval = 1500 * time.Millisecond
+		interval = 2000 * time.Millisecond
 	}
-	return &Monitor{
+	m := &Monitor{
 		interval: interval,
 		stopCh:   make(chan struct{}),
 	}
+	m.initNVML()
+	return m
+}
+
+func (m *Monitor) initNVML() {
+	mod := syscall.NewLazyDLL("nvml.dll")
+	if err := mod.Load(); err != nil {
+		return
+	}
+
+	pInit := mod.NewProc("nvmlInit_v2")
+	pGetHandle := mod.NewProc("nvmlDeviceGetHandleByIndex_v2")
+	pGetTemp := mod.NewProc("nvmlDeviceGetTemperature")
+	pGetUtil := mod.NewProc("nvmlDeviceGetUtilizationRates")
+
+	r, _, _ := pInit.Call()
+	if r != 0 {
+		return
+	}
+
+	var dev uintptr
+	r, _, _ = pGetHandle.Call(0, uintptr(unsafe.Pointer(&dev)))
+	if r != 0 {
+		return
+	}
+
+	m.nvmlDev = dev
+	m.pGetTemp = pGetTemp
+	m.pGetUtil = pGetUtil
+	m.nvmlLoaded = true
 }
 
 func (m *Monitor) Start() {
@@ -162,23 +199,23 @@ func (m *Monitor) queryRAM() float64 {
 }
 
 func (m *Monitor) queryGPU() (temp float64, usage float64) {
-	cmd := exec.Command("nvidia-smi", "--query-gpu=temperature.gpu,utilization.gpu", "--format=csv,noheader,nounits")
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Run(); err != nil {
+	if !m.nvmlLoaded {
 		return 0, 0
 	}
 
-	str := strings.TrimSpace(out.String())
-	parts := strings.Split(str, ",")
-	if len(parts) >= 2 {
-		t, _ := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
-		u, _ := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
-		return t, u
+	var t uint32
+	r1, _, _ := m.pGetTemp.Call(m.nvmlDev, 0, uintptr(unsafe.Pointer(&t)))
+	if r1 == 0 {
+		temp = float64(t)
 	}
-	return 0, 0
+
+	var util nvmlUtilization
+	r2, _, _ := m.pGetUtil.Call(m.nvmlDev, uintptr(unsafe.Pointer(&util)))
+	if r2 == 0 {
+		usage = float64(util.GPU)
+	}
+
+	return temp, usage
 }
 
 func (m *Monitor) loop() {
@@ -210,4 +247,3 @@ func (m *Monitor) loop() {
 		}
 	}
 }
-
