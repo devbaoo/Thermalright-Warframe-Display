@@ -30,7 +30,10 @@ def build_shortcuts():
         except Exception as e:
             print(f"Icon generation note: {e}")
 
-    # Find pythonw.exe
+    dist_exe = os.path.join(script_dir, "dist", "ThermalrightWarframe", "ThermalrightWarframe.exe")
+    use_compiled_exe = os.path.exists(dist_exe)
+
+    # Find pythonw.exe fallback
     python_dir = os.path.dirname(sys.executable)
     pythonw = os.path.join(python_dir, "pythonw.exe")
     if not os.path.exists(pythonw):
@@ -44,18 +47,31 @@ def build_shortcuts():
     ]
 
     for shortcut_path in shortcut_targets:
-        # Build clean VBS script using Chr(34) to escape double quotes
-        vbs_content = (
-            'Set WshShell = CreateObject("WScript.Shell")\n'
-            f'Set Shortcut = WshShell.CreateShortcut("{shortcut_path}")\n'
-            f'Shortcut.TargetPath = "{pythonw}"\n'
-            f'Shortcut.Arguments = Chr(34) & "{main_script}" & Chr(34)\n'
-            f'Shortcut.WorkingDirectory = "{script_dir}"\n'
-            'Shortcut.Description = "Thermalright Warframe AIO Display Controller"\n'
-        )
-        if os.path.exists(icon_ico):
-            vbs_content += f'Shortcut.IconLocation = "{icon_ico},0"\n'
-        vbs_content += 'Shortcut.Save\n'
+        if use_compiled_exe:
+            vbs_content = (
+                'Set WshShell = CreateObject("WScript.Shell")\n'
+                f'Set Shortcut = WshShell.CreateShortcut("{shortcut_path}")\n'
+                f'Shortcut.TargetPath = "{dist_exe}"\n'
+                'Shortcut.Arguments = ""\n'
+                f'Shortcut.WorkingDirectory = "{os.path.dirname(dist_exe)}"\n'
+                'Shortcut.Description = "Thermalright Warframe AIO Display Controller"\n'
+            )
+            if os.path.exists(icon_ico):
+                vbs_content += f'Shortcut.IconLocation = "{icon_ico},0"\n'
+            vbs_content += 'Shortcut.Save\n'
+        else:
+            # Build clean VBS script using Chr(34) to escape double quotes
+            vbs_content = (
+                'Set WshShell = CreateObject("WScript.Shell")\n'
+                f'Set Shortcut = WshShell.CreateShortcut("{shortcut_path}")\n'
+                f'Shortcut.TargetPath = "{pythonw}"\n'
+                f'Shortcut.Arguments = Chr(34) & "{main_script}" & Chr(34)\n'
+                f'Shortcut.WorkingDirectory = "{script_dir}"\n'
+                'Shortcut.Description = "Thermalright Warframe AIO Display Controller"\n'
+            )
+            if os.path.exists(icon_ico):
+                vbs_content += f'Shortcut.IconLocation = "{icon_ico},0"\n'
+            vbs_content += 'Shortcut.Save\n'
 
         vbs_file = os.path.join(tempfile.gettempdir(), "create_warframe_lnk.vbs")
         with open(vbs_file, "w", encoding="utf-8") as f:

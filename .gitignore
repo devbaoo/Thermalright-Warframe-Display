@@ -16,6 +16,11 @@ app.log
 # Temporary Profiles
 edge_profile/
 
+# Build & PyInstaller
+build/
+dist/
+*.spec
+
 # OS / Editor
 .vscode/
 .idea/

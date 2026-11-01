@@ -17,7 +17,13 @@ import urllib.request
 import webbrowser
 from PIL import Image
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False):
+    SCRIPT_DIR = os.path.dirname(sys.executable)
+    BUNDLE_DIR = getattr(sys, '_MEIPASS', SCRIPT_DIR)
+else:
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    BUNDLE_DIR = SCRIPT_DIR
+
 if SCRIPT_DIR not in sys.path:
     sys.path.insert(0, SCRIPT_DIR)
 
@@ -36,6 +42,11 @@ try:
     import pystray
 except ImportError:
     pystray = None
+
+try:
+    import webview
+except ImportError:
+    webview = None
 
 from display_driver import WarframeDisplayDriver
 from gif_processor import GifProcessor
@@ -127,14 +138,16 @@ class WarframeControllerApp:
 
         self.running = True
         self.is_playing = True
+        self.is_quitting = False
         self.current_frame_index = 0
+        self.native_window = None
         self.browser_proc = None
         self.tray_icon = None
 
         # Load last used file or default core preset
         last_file = self.config.get("last_file", "")
         if not last_file or not os.path.exists(last_file):
-            last_file = os.path.join(SCRIPT_DIR, "assets", "sample_core.gif")
+            last_file = os.path.join(BUNDLE_DIR, "assets", "sample_core.gif")
 
         rot = self.config.get("rotation", 0)
         fit = self.config.get("fit_mode", "fill")
@@ -166,15 +179,53 @@ class WarframeControllerApp:
         # 5. Start background display streaming loop
         threading.Thread(target=self._display_loop, daemon=True).start()
 
-        # 6. Launch Standalone App window if not minimized
-        if not minimized:
-            self.open_window()
+        # 6. Start system tray in detached background mode
+        self._start_tray()
 
-        # 7. Start system tray on main thread or keep process alive
-        self._run_tray_or_wait()
+        # 7. Launch True Native Desktop Window (pywebview) or fallback
+        if webview is not None:
+            self._run_native_window(minimized=minimized)
+        else:
+            if not minimized:
+                self.open_window()
+            self._keep_alive_loop()
+
+    def _run_native_window(self, minimized=False):
+        """Creates and runs a true native Windows desktop window using pywebview."""
+        url = f"http://127.0.0.1:{PORT}"
+        self.native_window = webview.create_window(
+            title="Thermalright Frozen Warframe Display",
+            url=url,
+            width=1080,
+            height=720,
+            min_size=(880, 580),
+            hidden=minimized
+        )
+
+        def on_closing():
+            if self.config.get("minimize_to_tray", True) and not self.is_quitting:
+                try:
+                    self.native_window.hide()
+                    return False
+                except Exception:
+                    pass
+            return True
+
+        self.native_window.events.closing += on_closing
+        try:
+            webview.start()
+        except Exception as e:
+            logger.error(f"Native GUI event loop exception: {e}")
 
     def open_window(self):
-        """Open or refocus the standalone Control Deck Window."""
+        """Open or refocus the native desktop window."""
+        if self.native_window is not None:
+            try:
+                self.native_window.show()
+                self.native_window.restore()
+                return
+            except Exception as e:
+                logger.debug(f"native_window restore error: {e}")
         self.browser_proc = launch_browser_app(f"http://127.0.0.1:{PORT}")
 
     def _display_loop(self):
@@ -237,12 +288,11 @@ class WarframeControllerApp:
                 logger.error(f"Error in display streaming loop: {e}")
                 time.sleep(0.05)
 
-    def _run_tray_or_wait(self):
+    def _start_tray(self):
         if pystray is None:
-            self._keep_alive_loop()
             return
 
-        icon_path = os.path.join(SCRIPT_DIR, "assets", "app_icon.png")
+        icon_path = os.path.join(BUNDLE_DIR, "assets", "app_icon.png")
         if os.path.exists(icon_path):
             try:
                 img = Image.open(icon_path)
@@ -252,7 +302,7 @@ class WarframeControllerApp:
             img = Image.new("RGB", (64, 64), (0, 240, 255))
 
         menu = pystray.Menu(
-            pystray.MenuItem("❄️ Mở Control Deck", lambda: self.open_window(), default=True),
+            pystray.MenuItem("❄️ Mở Bảng Điều Khiển", lambda: self.open_window(), default=True),
             pystray.MenuItem("⏯️ Tạm dừng / Tiếp tục", self._toggle_play),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("🛑 Thoát hoàn toàn", self.quit)
@@ -260,11 +310,9 @@ class WarframeControllerApp:
 
         try:
             self.tray_icon = pystray.Icon("WarframeAIO", img, "Thermalright Warframe Control", menu)
-            # Run tray loop on main thread (handles Win32 window messages smoothly)
-            self.tray_icon.run()
+            self.tray_icon.run_detached()
         except Exception as e:
             logger.warning(f"System tray icon could not be displayed: {e}")
-            self._keep_alive_loop()
 
     def _keep_alive_loop(self):
         try:
@@ -278,10 +326,16 @@ class WarframeControllerApp:
 
     def quit(self, icon=None, item=None):
         logger.info("Stopping Warframe Controller...")
+        self.is_quitting = True
         self.running = False
         if self.tray_icon:
             try:
                 self.tray_icon.stop()
+            except Exception:
+                pass
+        if self.native_window:
+            try:
+                self.native_window.destroy()
             except Exception:
                 pass
         if self.browser_proc and self.browser_proc.poll() is None:

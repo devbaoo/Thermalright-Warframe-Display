@@ -21,7 +21,7 @@ class WebUIServer:
         self.port = port
         self.on_open_window = on_open_window
         self.app = Bottle()
-        self.base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
         self.web_dir = os.path.join(self.base_dir, "web")
         self.assets_dir = os.path.join(self.base_dir, "assets")
         self.current_preview_jpeg = b""
