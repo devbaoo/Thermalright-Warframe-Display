@@ -189,11 +189,16 @@ class WarframeDisplayDriver:
                 else:
                     logger.warning(f"Fast-path chunk write failed with error {ret}, resetting handle...")
                     self.disconnect()
+                    return False
             except Exception as e:
                 logger.warning(f"Fast-path write exception: {e}")
                 self.disconnect()
+                return False
 
         # SLOW-PATH: Standard pyusb chunked write
+        if not self.device:
+            return False
+
         view = memoryview(packet)
         try:
             for offset in range(0, packet_len, USB_CHUNK_SIZE):
