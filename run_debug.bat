@@ -12,3 +12,4 @@ if %ERRORLEVEL% NEQ 0 (
     echo Check app.log for details.
     pause
 )
+

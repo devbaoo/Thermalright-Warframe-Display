@@ -3,20 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thermalright Frozen Warframe 360 SE - Pro Max Control Deck</title>
+  <title>Thermalright Frozen Warframe 360 SE - Display Controller</title>
   <style>
     :root {
-      --bg-dark: #080A0F;
-      --panel-bg: rgba(16, 21, 32, 0.75);
-      --panel-border: rgba(255, 255, 255, 0.08);
-      --accent-cyan: #00F0FF;
-      --accent-cyan-glow: rgba(0, 240, 255, 0.35);
-      --accent-purple: #9D00FF;
-      --accent-emerald: #00FF9D;
-      --accent-crimson: #FF0055;
-      --text-main: #FFFFFF;
-      --text-muted: #8E9BAE;
-      --text-dim: #4B5565;
+      --bg-base: #0B0D11;
+      --bg-surface: #13171F;
+      --bg-elevated: #1B202A;
+      --bg-hover: #232A36;
+      
+      --border-subtle: #202632;
+      --border-strong: #2D3646;
+      --border-focus: #3B82F6;
+      
+      --accent: #3B82F6;
+      --accent-hover: #2563EB;
+      --accent-subtle: rgba(59, 130, 246, 0.12);
+      
+      --success: #10B981;
+      --success-subtle: rgba(16, 185, 129, 0.12);
+      --warning: #F59E0B;
+      --warning-subtle: rgba(245, 158, 11, 0.12);
+      --danger: #EF4444;
+      --danger-subtle: rgba(239, 68, 68, 0.12);
+
+      --text-primary: #F3F4F6;
+      --text-secondary: #9CA3AF;
+      --text-tertiary: #6B7280;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+      
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
 
     * {
@@ -28,201 +47,257 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Roboto, sans-serif;
-      background: var(--bg-dark);
-      color: var(--text-main);
-      overflow-x: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, Roboto, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
       height: 100vh;
       display: flex;
       flex-direction: column;
-      background-image: 
-        radial-gradient(circle at 15% 20%, rgba(0, 240, 255, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 85% 80%, rgba(157, 0, 255, 0.08) 0%, transparent 40%);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(0, 240, 255, 0.4); }
+    ::-webkit-scrollbar-thumb { background: #28303F; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3B475D; }
 
-    /* Top Navigation Header */
+    /* Top Application Bar */
     header {
-      height: 64px;
-      padding: 0 28px;
+      height: 56px;
+      padding: 0 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--panel-border);
-      background: rgba(10, 13, 20, 0.85);
-      backdrop-filter: blur(20px);
-      z-index: 50;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      flex-shrink: 0;
     }
 
-    .brand {
+    .brand-section {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
 
-    .brand-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #00F0FF, #9D00FF);
+    .brand-logo {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, #1E293B, #0F172A);
+      border: 1px solid var(--border-strong);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+      color: var(--accent);
+    }
+
+    .brand-info {
+      display: flex;
+      flex-direction: column;
     }
 
     .brand-title {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 700;
       letter-spacing: 0.5px;
-    }
-
-    .brand-subtitle {
-      font-size: 11px;
-      color: var(--text-muted);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-    }
-
-    .status-badge {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 14px;
-      border-radius: 20px;
+    }
+
+    .brand-version {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--accent-subtle);
+      color: var(--accent);
+      letter-spacing: 0;
+    }
+
+    .brand-model {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .stat-pill strong {
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      border-radius: var(--radius-md);
       font-size: 12px;
       font-weight: 600;
-      background: rgba(0, 255, 157, 0.1);
-      border: 1px solid rgba(0, 255, 157, 0.25);
-      color: var(--accent-emerald);
-      transition: all 0.3s;
+      background: var(--success-subtle);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.25);
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: var(--accent-emerald);
-      box-shadow: 0 0 10px var(--accent-emerald);
-      animation: pulse 2s infinite;
+      background: currentColor;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.85); }
-    }
-
-    /* Main Container */
-    .app-container {
+    /* Main Content Layout */
+    .app-layout {
       flex: 1;
       display: grid;
       grid-template-columns: 460px 1fr;
-      gap: 24px;
-      padding: 24px 28px;
-      height: calc(100vh - 64px);
+      height: calc(100vh - 56px);
       overflow: hidden;
     }
 
-    /* Left Side: AIO Pump Simulation */
-    .pump-stage {
+    /* LEFT: The Realistic Square Pump Block Stage */
+    .pump-stage-wrapper {
+      background: #0e1117;
+      border-right: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding: 24px;
       position: relative;
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      border-radius: 24px;
-      backdrop-filter: blur(24px);
-      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
-      padding: 20px;
-      overflow: hidden;
     }
 
-    /* Hardware AIO Bezel */
-    .pump-head {
-      width: 370px;
-      height: 370px;
-      border-radius: 50%;
-      position: relative;
+    .stage-header {
+      position: absolute;
+      top: 18px;
+      left: 24px;
+      right: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stage-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle, #1a1e27 40%, #0d1017 85%, #05070a 100%);
+      gap: 6px;
+    }
+
+    .resolution-badge {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-tertiary);
+      background: var(--bg-surface);
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* THERMALRIGHT WARFRAME 360 REAL SQUARE PUMP HEAD */
+    .cooler-block {
+      width: 330px;
+      height: 330px;
+      border-radius: 28px;
+      background: linear-gradient(145deg, #1A1F29 0%, #12161E 100%);
+      border: 2px solid #2A3342;
       box-shadow: 
-        0 25px 60px rgba(0, 0, 0, 0.9),
-        inset 0 2px 4px rgba(255, 255, 255, 0.15),
-        inset 0 -4px 8px rgba(0, 0, 0, 0.9);
-      border: 3px solid #232936;
-      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        0 20px 50px rgba(0, 0, 0, 0.6),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.8);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
     }
 
-    /* Industrial Screws */
-    .screw {
+    /* Chamfered Aluminum Rim */
+    .cooler-block::before {
+      content: "";
       position: absolute;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #333a47;
-      box-shadow: inset 0 1px 2px #555e70, 0 1px 2px #000;
+      inset: 8px;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: linear-gradient(180deg, #161A22, #0E1117);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
     }
-    .screw-tl { top: 20px; left: 20px; }
-    .screw-tr { top: 20px; right: 20px; }
-    .screw-bl { bottom: 20px; left: 20px; }
-    .screw-br { bottom: 20px; right: 20px; }
 
-    /* Animated RGB Halo Ring */
-    .argb-ring {
+    /* Thermalright subtle laser branding */
+    .cooler-branding {
       position: absolute;
-      width: 320px;
-      height: 320px;
-      border-radius: 50%;
-      padding: 3px;
-      background: conic-gradient(from 0deg, #00F0FF, #9D00FF, #FF0055, #00FF9D, #00F0FF);
-      animation: rotateRing 6s linear infinite;
-      box-shadow: 0 0 30px var(--accent-cyan-glow);
+      top: 14px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #4B5565;
+      text-transform: uppercase;
+      z-index: 10;
     }
 
-    @keyframes rotateRing {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Screen Frame */
-    .screen-mount {
-      position: absolute;
-      width: 300px;
-      height: 300px;
-      border-radius: 50%;
-      background: #090B10;
+    /* The Screen Recessed Bezel */
+    .screen-housing {
+      width: 270px;
+      height: 270px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9);
-      overflow: hidden;
-    }
-
-    /* The actual 320x240 LCD display canvas */
-    .screen-canvas-box {
-      width: 256px;
-      height: 192px;
+      z-index: 5;
       position: relative;
-      background: #000;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 0 25px rgba(0, 0, 0, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      cursor: pointer;
-      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    .screen-canvas-box:hover {
-      box-shadow: 0 0 30px var(--accent-cyan-glow);
+    /* Screen Frame (4:3 aspect ratio, flips between landscape & portrait) */
+    .screen-panel {
+      width: 256px;
+      height: 192px; /* 4:3 landscape default */
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
+      cursor: pointer;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                  height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-color 0.2s,
+                  box-shadow 0.2s;
+    }
+
+    .screen-panel.portrait {
+      width: 192px;
+      height: 256px; /* 3:4 portrait */
+    }
+
+    .screen-panel:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 24px rgba(59, 130, 246, 0.25);
     }
 
     #livePreview {
@@ -230,435 +305,425 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      background: #000;
     }
 
-    /* Drag & Drop overlay on screen */
-    .drop-hint {
+    /* Drag & Drop Hint Overlay */
+    .screen-drop-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(11, 13, 17, 0.82);
       backdrop-filter: blur(4px);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 8px;
+      color: var(--text-primary);
       opacity: 0;
       transition: opacity 0.2s;
-      color: var(--accent-cyan);
-      font-size: 13px;
+      border: 2px dashed var(--accent);
+      border-radius: 10px;
+    }
+
+    .screen-panel:hover .screen-drop-overlay {
+      opacity: 1;
+    }
+
+    .screen-drop-overlay svg {
+      color: var(--accent);
+    }
+
+    .screen-drop-overlay span {
+      font-size: 12px;
       font-weight: 600;
       text-align: center;
-      padding: 10px;
-      border: 2px dashed var(--accent-cyan);
-      border-radius: 12px;
+      padding: 0 16px;
     }
 
-    .screen-canvas-box:hover .drop-hint {
-      opacity: 0.9;
-    }
-
-    /* Live HUD Overlay details */
-    .screen-meta {
+    /* Screen Meta Overlay (HUD tags) */
+    .screen-status-bar {
       position: absolute;
-      bottom: 8px;
-      left: 10px;
-      right: 10px;
+      bottom: 6px;
+      left: 6px;
+      right: 6px;
       display: flex;
       justify-content: space-between;
       pointer-events: none;
     }
 
-    .pill-badge {
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(8px);
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 10px;
+    .mini-badge {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-family: var(--font-mono);
       font-weight: 600;
-      letter-spacing: 0.5px;
+      color: #94A3B8;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      color: var(--accent-cyan);
     }
 
-    /* Pump stage action bar */
-    .pump-actions {
-      margin-top: 20px;
+    /* Stage Controls Bar */
+    .stage-controls {
+      margin-top: 22px;
       display: flex;
       gap: 10px;
-      width: 100%;
-      max-width: 370px;
+      width: 330px;
     }
 
-    /* Right Side: Tabbed Deck */
-    .control-deck {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      height: 100%;
+    /* RIGHT: Modern Minimalist Controls Panel */
+    .settings-panel {
       overflow-y: auto;
-      padding-right: 6px;
-    }
-
-    /* Tab switcher */
-    .nav-tabs {
+      padding: 24px 28px;
       display: flex;
-      background: rgba(16, 21, 32, 0.85);
-      border: 1px solid var(--panel-border);
-      border-radius: 14px;
-      padding: 4px;
-      gap: 6px;
-    }
-
-    .tab-btn {
-      flex: 1;
-      height: 38px;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.25s;
-    }
-
-    .tab-btn:hover {
-      color: var(--text-main);
-      background: rgba(255, 255, 255, 0.04);
-    }
-
-    .tab-btn.active {
-      background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(157, 0, 255, 0.15));
-      border: 1px solid rgba(0, 240, 255, 0.3);
-      color: var(--accent-cyan);
-      box-shadow: 0 4px 15px rgba(0, 240, 255, 0.1);
-    }
-
-    /* Tab content panes */
-    .tab-pane {
-      display: none;
       flex-direction: column;
-      gap: 16px;
-    }
-    .tab-pane.active {
-      display: flex;
+      gap: 20px;
+      background: var(--bg-base);
     }
 
-    /* Cards */
+    /* Section Cards */
     .card {
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      border-radius: 18px;
-      padding: 20px;
-      backdrop-filter: blur(20px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
 
-    .card-title {
-      font-size: 14px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-muted);
-      margin-bottom: 14px;
+    .card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    /* File Drop Zone */
-    .upload-zone {
-      border: 2px dashed rgba(0, 240, 255, 0.3);
-      border-radius: 14px;
-      padding: 24px 16px;
-      text-align: center;
-      background: rgba(0, 240, 255, 0.02);
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .upload-zone:hover {
-      border-color: var(--accent-cyan);
-      background: rgba(0, 240, 255, 0.06);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
-    }
-
-    .upload-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-
-    .upload-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    /* Presets Grid */
-    .presets-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-
-    .preset-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--panel-border);
-      border-radius: 12px;
-      padding: 10px;
-      cursor: pointer;
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
-      gap: 12px;
-      transition: all 0.25s;
+      gap: 8px;
     }
 
-    .preset-card:hover {
-      background: rgba(0, 240, 255, 0.08);
-      border-color: var(--accent-cyan);
-      transform: translateY(-2px);
+    .card-title svg {
+      color: var(--text-tertiary);
     }
 
-    .preset-thumb {
-      width: 44px;
-      height: 33px;
-      border-radius: 6px;
-      object-fit: cover;
-      background: #000;
-    }
-
-    .preset-name {
-      font-size: 13px;
+    .field-label {
+      font-size: 12px;
       font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
     }
 
-    /* Segmented Button Groups */
-    .segmented {
-      display: flex;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--panel-border);
-      border-radius: 12px;
-      padding: 4px;
+    /* Segmented Controls */
+    .segmented-control {
+      display: grid;
+      background: #090B0E;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 3px;
       gap: 4px;
     }
 
-    .seg-item {
-      flex: 1;
+    .seg-4 { grid-template-columns: repeat(4, 1fr); }
+    .seg-3 { grid-template-columns: repeat(3, 1fr); }
+    .seg-2 { grid-template-columns: repeat(2, 1fr); }
+
+    .seg-btn {
       height: 34px;
       border: none;
       background: transparent;
-      color: var(--text-muted);
+      color: var(--text-secondary);
       font-size: 12px;
       font-weight: 600;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
-      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
     }
 
-    .seg-item:hover {
-      color: var(--text-main);
+    .seg-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
     }
 
-    .seg-item.active {
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--accent-cyan);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    .seg-btn.active {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border-strong);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
 
-    /* Custom Slider */
-    .slider-row {
+    .seg-btn.active svg {
+      color: var(--accent);
+    }
+
+    /* Sliders */
+    .slider-container {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin-top: 14px;
     }
 
     .slider-header {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
     }
 
-    .slider-val {
-      color: var(--accent-cyan);
+    .slider-value {
+      font-family: var(--font-mono);
       font-weight: 700;
+      color: var(--accent);
+      font-size: 13px;
     }
 
     input[type=range] {
       -webkit-appearance: none;
       width: 100%;
-      height: 6px;
+      height: 5px;
       border-radius: 3px;
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--border-strong);
       outline: none;
+      transition: background 0.15s;
     }
 
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
-      background: var(--accent-cyan);
+      background: #FFFFFF;
+      border: 2px solid var(--accent);
       cursor: pointer;
-      box-shadow: 0 0 12px var(--accent-cyan);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
       transition: transform 0.1s;
     }
 
     input[type=range]::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
+      transform: scale(1.15);
     }
 
-    /* Switches */
-    .switch-row {
+    /* Switch Toggles */
+    .toggle-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 0;
+      padding: 2px 0;
     }
 
-    .switch-label {
+    .toggle-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .toggle-title {
       font-size: 13px;
       font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .toggle-desc {
+      font-size: 11px;
+      color: var(--text-tertiary);
     }
 
     .switch {
       position: relative;
       display: inline-block;
-      width: 44px;
-      height: 24px;
+      width: 38px;
+      height: 22px;
+      flex-shrink: 0;
     }
 
     .switch input { opacity: 0; width: 0; height: 0; }
 
-    .slider-toggle {
+    .switch-slider {
       position: absolute;
       cursor: pointer;
       inset: 0;
-      background-color: rgba(255, 255, 255, 0.15);
-      transition: .3s;
-      border-radius: 24px;
+      background: var(--border-strong);
+      border-radius: 20px;
+      transition: 0.2s;
     }
 
-    .slider-toggle:before {
+    .switch-slider::before {
       position: absolute;
       content: "";
-      height: 18px;
-      width: 18px;
+      height: 16px;
+      width: 16px;
       left: 3px;
       bottom: 3px;
-      background-color: white;
-      transition: .3s;
+      background: white;
       border-radius: 50%;
+      transition: 0.2s;
     }
 
-    input:checked + .slider-toggle {
-      background-color: var(--accent-cyan);
+    input:checked + .switch-slider {
+      background: var(--accent);
     }
 
-    input:checked + .slider-toggle:before {
-      transform: translateX(20px);
+    input:checked + .switch-slider::before {
+      transform: translateX(16px);
     }
 
     /* Buttons */
     .btn {
-      height: 42px;
-      border-radius: 12px;
+      height: 38px;
+      padding: 0 16px;
+      border-radius: var(--radius-md);
       font-size: 13px;
       font-weight: 600;
-      border: none;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: all 0.25s;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      outline: none;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #00C853, #00E676);
-      color: #000;
-      box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
+      background: var(--accent);
+      color: white;
     }
     .btn-primary:hover {
-      box-shadow: 0 6px 25px rgba(0, 230, 118, 0.5);
-      transform: translateY(-1px);
-    }
-
-    .btn-danger {
-      background: linear-gradient(135deg, #D32F2F, #FF1744);
-      color: #FFF;
-      box-shadow: 0 4px 15px rgba(255, 23, 68, 0.3);
-    }
-    .btn-danger:hover {
-      box-shadow: 0 6px 25px rgba(255, 23, 68, 0.5);
-      transform: translateY(-1px);
+      background: var(--accent-hover);
     }
 
     .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-main);
-      border: 1px solid var(--panel-border);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border-color: var(--border-strong);
     }
     .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.15);
+      background: var(--bg-hover);
+      border-color: var(--text-tertiary);
     }
 
-    /* Hardware Telemetry Meter Grid */
-    .gauges-grid {
+    .btn-danger {
+      background: var(--danger-subtle);
+      color: var(--danger);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .btn-danger:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    /* Presets Minimal Grid */
+    .presets-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: 8px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
     }
 
-    .gauge-box {
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--panel-border);
-      border-radius: 12px;
-      padding: 12px;
+    .preset-card {
+      background: #090B0E;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
       text-align: center;
     }
 
-    .gauge-value {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--accent-cyan);
-      margin: 4px 0;
+    .preset-card:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+      transform: translateY(-2px);
     }
 
-    .gauge-title {
+    .preset-thumb {
+      width: 100%;
+      height: 48px;
+      border-radius: 4px;
+      object-fit: cover;
+      background: #000;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .preset-name {
       font-size: 11px;
-      color: var(--text-muted);
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+
+    /* Telemetry Minimalist Grid */
+    .telemetry-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .telemetry-box {
+      background: #090B0E;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .telemetry-box .label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-tertiary);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    /* Notification Toast */
+    .telemetry-box .value {
+      font-size: 18px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Toast */
     #toast {
       position: fixed;
-      bottom: 24px;
+      bottom: 20px;
       right: 24px;
-      padding: 12px 20px;
-      background: rgba(16, 21, 32, 0.95);
-      border: 1px solid var(--accent-cyan);
-      border-radius: 12px;
-      color: #FFF;
+      padding: 10px 16px;
+      background: #1E2532;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
       font-size: 13px;
-      font-weight: 600;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      transform: translateY(100px);
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      transform: translateY(80px);
       opacity: 0;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      z-index: 100;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     #toast.show {
       transform: translateY(0);
@@ -668,200 +733,304 @@
 </head>
 <body>
 
-  <!-- Top Header -->
+  <!-- Top App Navigation -->
   <header>
-    <div class="brand">
-      <div class="brand-icon">❄️</div>
-      <div>
-        <div class="brand-title">WARFRAME 360 SE // CONTROL DECK</div>
-        <div class="brand-subtitle">THERMALRIGHT NATIVE ARGB DISPLAY</div>
+    <div class="brand-section">
+      <div class="brand-logo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+      </div>
+      <div class="brand-info">
+        <div class="brand-title">
+          THERMALRIGHT WARFRAME 360 SE
+          <span class="brand-version">NATIVE</span>
+        </div>
+        <div class="brand-model">ARGB Display Controller • USB Direct (0416:5302)</div>
       </div>
     </div>
 
-    <div id="connStatus" class="status-badge">
-      <div class="status-dot"></div>
-      <span id="connText">ĐÃ KẾT NỐI (0416:5302)</span>
+    <div class="header-actions">
+      <!-- Hardware stats preview -->
+      <div class="stat-pill">
+        <span>CPU</span> <strong id="topCpu">--%</strong>
+      </div>
+      <div class="stat-pill">
+        <span>GPU</span> <strong id="topGpu">--°C</strong>
+      </div>
+      <div class="stat-pill">
+        <span>RAM</span> <strong id="topRam">--%</strong>
+      </div>
+
+      <!-- Connection Status Badge -->
+      <div id="connStatus" class="status-indicator">
+        <div class="status-dot"></div>
+        <span id="connText">ĐÃ KẾT NỐI</span>
+      </div>
     </div>
   </header>
 
-  <!-- Main Grid -->
-  <div class="app-container">
-    
-    <!-- LEFT: Virtual AIO Simulation -->
-    <div class="pump-stage">
-      
-      <div class="pump-head">
-        <!-- Corner Screws -->
-        <div class="screw screw-tl"></div>
-        <div class="screw screw-tr"></div>
-        <div class="screw screw-bl"></div>
-        <div class="screw screw-br"></div>
+  <!-- Main View -->
+  <div class="app-layout">
 
-        <!-- Glowing ARGB Halo -->
-        <div class="argb-ring"></div>
+    <!-- LEFT: True Physical Cooler Block Stage -->
+    <div class="pump-stage-wrapper">
+      <div class="stage-header">
+        <span class="stage-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          </svg>
+          Mô Phỏng Màn Hình Warframe AIO
+        </span>
+        <span class="resolution-badge" id="screenRes">320 × 240 (Ngang)</span>
+      </div>
 
-        <!-- Inner Mount & Screen Canvas -->
-        <div class="screen-mount">
-          <div class="screen-canvas-box" id="screenBox" onclick="browseFile()">
-            <img id="livePreview" src="/api/preview" alt="AIO Screen Live Feed">
-            <div class="drop-hint">
-              <span>📂 Nhấp hoặc Kéo thả GIF vào đây</span>
+      <!-- Square Pump Head Model -->
+      <div class="cooler-block">
+        <div class="cooler-branding">THERMALRIGHT</div>
+
+        <div class="screen-housing">
+          <!-- The 2.4" LCD Display Panel -->
+          <div class="screen-panel" id="screenPanel" onclick="browseFile()">
+            <img id="livePreview" src="/api/preview" alt="Warframe LCD Preview">
+
+            <!-- Drag & Drop Hint Overlay -->
+            <div class="screen-drop-overlay">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span>Nhấp hoặc kéo thả GIF vào đây</span>
             </div>
-            <div class="screen-meta">
-              <span class="pill-badge" id="hudRot">0°</span>
-              <span class="pill-badge" id="hudFps">20 FPS</span>
+
+            <!-- Screen status HUD badges -->
+            <div class="screen-status-bar">
+              <span class="mini-badge" id="hudRot">0°</span>
+              <span class="mini-badge" id="hudFps">20 FPS</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Quick Actions -->
-      <div class="pump-actions">
-        <button class="btn btn-secondary" style="flex:1" onclick="quickRotate()">🔄 Xoay 90°</button>
-        <button class="btn btn-primary" style="flex:1" onclick="browseFile()">📁 Chọn Tệp Mới</button>
-      </div>
+      <!-- Quick action controls -->
+      <div class="stage-controls">
+        <button class="btn btn-primary" style="flex: 1;" onclick="browseFile()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Chọn GIF / Ảnh Mới
+        </button>
 
+        <button class="btn btn-secondary" style="flex: 1;" onclick="quickRotate()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+          </svg>
+          Xoay 90°
+        </button>
+      </div>
     </div>
 
-    <!-- RIGHT: Control Deck Tabs -->
-    <div class="control-deck">
-      
-      <!-- Nav Tabs -->
-      <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('media')">🖼️ GIF & Hình Ảnh</button>
-        <button class="tab-btn" onclick="switchTab('telemetry')">📊 Thông Số (HUD)</button>
-        <button class="tab-btn" onclick="switchTab('system')">⚡ Tối Ưu Hệ Thống</button>
-      </div>
+    <!-- RIGHT: Streamlined Settings & Controls -->
+    <div class="settings-panel">
 
-      <!-- TAB 1: Media & GIF -->
-      <div id="tab-media" class="tab-pane active">
-        
-        <!-- Presets Card -->
-        <div class="card">
+      <!-- SECTION 1: Orientation & Display Geometry -->
+      <div class="card">
+        <div class="card-header">
           <div class="card-title">
-            <span>Thư Viện Ảnh Mẫu (Presets)</span>
-            <span style="font-size:11px;color:var(--accent-cyan);cursor:pointer;" onclick="browseFile()">+ Tải file riêng</span>
-          </div>
-          <div class="presets-grid" id="presetList">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-
-        <!-- Orientation & Scaling Card -->
-        <div class="card">
-          <div class="card-title">Hướng Xoay & Căn Chỉnh Khung Hình</div>
-          
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Góc xoay màn hình (Orientation):</div>
-          <div class="segmented" id="rotGroup">
-            <button class="seg-item active" onclick="setRotation(0)">0° (Ngang)</button>
-            <button class="seg-item" onclick="setRotation(90)">90°</button>
-            <button class="seg-item" onclick="setRotation(180)">180°</button>
-            <button class="seg-item" onclick="setRotation(270)">270°</button>
-          </div>
-
-          <div style="font-size:12px;color:var(--text-muted);margin:14px 0 6px;">Chế độ vừa khung (Fit Mode):</div>
-          <div class="segmented" id="fitGroup">
-            <button class="seg-item active" onclick="setFit('fill')">Cắt vừa (Fill)</button>
-            <button class="seg-item" onclick="setFit('fit')">Giữ tỷ lệ (Fit)</button>
-            <button class="seg-item" onclick="setFit('stretch')">Kéo giãn</button>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            Hướng Xoay & Tỷ Lệ Hiển Thị
           </div>
         </div>
 
-        <!-- Display Sliders Card -->
-        <div class="card">
-          <div class="card-title">Tốc Độ & Độ Sáng Màn Hình</div>
-
-          <div class="slider-row">
-            <div class="slider-header">
-              <span>Tốc độ khung hình (Frame Rate):</span>
-              <span class="slider-val" id="valFps">20 FPS</span>
-            </div>
-            <input type="range" id="sliderFps" min="5" max="30" value="20" oninput="onFpsChange(this.value)">
-          </div>
-
-          <div class="slider-row" style="margin-top:16px;">
-            <div class="slider-header">
-              <span>Độ sáng màn hình LCD (Brightness):</span>
-              <span class="slider-val" id="valBri">100%</span>
-            </div>
-            <input type="range" id="sliderBri" min="10" max="100" value="100" oninput="onBriChange(this.value)">
+        <div>
+          <div class="field-label">Góc xoay màn hình (Orientation):</div>
+          <div class="segmented-control seg-4" id="rotControl">
+            <button class="seg-btn active" onclick="setRotation(0)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              0° (Ngang)
+            </button>
+            <button class="seg-btn" onclick="setRotation(90)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+              90° (Dọc)
+            </button>
+            <button class="seg-btn" onclick="setRotation(180)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              180°
+            </button>
+            <button class="seg-btn" onclick="setRotation(270)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M19 12l-7-7-7 7"/></svg>
+              270°
+            </button>
           </div>
         </div>
 
+        <div>
+          <div class="field-label">Chế độ khớp khung (Fit Mode):</div>
+          <div class="segmented-control seg-3" id="fitControl">
+            <button class="seg-btn active" onclick="setFit('fill')">Cắt đầy (Fill)</button>
+            <button class="seg-btn" onclick="setFit('fit')">Giữ tỷ lệ (Fit)</button>
+            <button class="seg-btn" onclick="setFit('stretch')">Kéo dãn (Stretch)</button>
+          </div>
+        </div>
       </div>
 
-      <!-- TAB 2: Telemetry & Overlay -->
-      <div id="tab-telemetry" class="tab-pane">
-        
-        <div class="card">
-          <div class="card-title">Giám Sát Phần Cứng Trực Tiếp (Siêu Nhẹ)</div>
-          <div class="gauges-grid">
-            <div class="gauge-box">
-              <span class="gauge-title">CPU USAGE</span>
-              <span class="gauge-value" id="hudCpuVal">0%</span>
-            </div>
-            <div class="gauge-box">
-              <span class="gauge-title">GPU TEMP</span>
-              <span class="gauge-value" id="hudGpuVal">0°C</span>
-            </div>
-            <div class="gauge-box">
-              <span class="gauge-title">RAM USAGE</span>
-              <span class="gauge-value" id="hudRamVal">0%</span>
-            </div>
+      <!-- SECTION 2: Display Brightness & FPS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            </svg>
+            Tinh Chỉnh Màn Hình LCD
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-title">Hiển Thị Thông Số Lên Màn Hình (HUD Overlay)</div>
-          
-          <div class="switch-row">
-            <span class="switch-label">Bật lớp phủ thông số CPU / RAM trên ảnh GIF</span>
-            <label class="switch">
-              <input type="checkbox" id="swOverlay" onchange="onOverlayToggle()">
-              <span class="slider-toggle"></span>
-            </label>
+        <!-- Brightness Slider -->
+        <div class="slider-container">
+          <div class="slider-header">
+            <span>Độ sáng màn hình LCD:</span>
+            <span class="slider-value" id="valBri">100%</span>
           </div>
-
-          <div style="font-size:12px;color:var(--text-muted);margin:14px 0 6px;">Vị trí hiển thị (Position):</div>
-          <div class="segmented" id="overlayPosGroup">
-            <button class="seg-item active" onclick="setOverlayPos('bottom')">Dưới cùng</button>
-            <button class="seg-item" onclick="setOverlayPos('center')">Ở giữa</button>
-            <button class="seg-item" onclick="setOverlayPos('top')">Trên cùng</button>
-          </div>
+          <input type="range" id="sliderBri" min="10" max="100" value="100" oninput="onBriChange(this.value)">
         </div>
 
+        <!-- FPS Slider -->
+        <div class="slider-container">
+          <div class="slider-header">
+            <span>Tốc độ khung hình (Frame Rate):</span>
+            <span class="slider-value" id="valFps">20 FPS</span>
+          </div>
+          <input type="range" id="sliderFps" min="5" max="30" value="20" oninput="onFpsChange(this.value)">
+        </div>
       </div>
 
-      <!-- TAB 3: System & Optimization -->
-      <div id="tab-system" class="tab-pane">
-        
-        <div class="card">
-          <div class="card-title">Dọn Dẹp Tiến Trình TRCC Cũ</div>
-          <div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:14px;" id="trccStatusText">
-            Kiểm tra trạng thái tiến trình TRCC gốc...
-          </div>
-          <button class="btn btn-danger" style="width:100%" onclick="killTrcc()">🛑 Dừng Toàn Bộ TRCC & HWINFO (Giải Phóng RAM & CPU)</button>
-        </div>
-
-        <div class="card">
-          <div class="card-title">Cài Đặt Khởi Động & Chạy Ngầm</div>
-          
-          <div class="switch-row">
-            <span class="switch-label">Khởi động ứng dụng cùng Windows (Chạy ngầm ở khay)</span>
-            <label class="switch">
-              <input type="checkbox" id="swAutostart" onchange="onAutostartToggle()">
-              <span class="slider-toggle"></span>
-            </label>
+      <!-- SECTION 3: Hardware HUD Overlay -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+              <rect x="9" y="9" width="6" height="6"></rect>
+              <line x1="9" y1="1" x2="9" y2="4"></line>
+              <line x1="15" y1="1" x2="15" y2="4"></line>
+              <line x1="9" y1="20" x2="9" y2="23"></line>
+              <line x1="15" y1="20" x2="15" y2="23"></line>
+            </svg>
+            Lớp Phủ Thông Số Phần Cứng (HUD Overlay)
           </div>
         </div>
 
+        <div class="toggle-row">
+          <div class="toggle-text">
+            <div class="toggle-title">Hiển thị thông số CPU / GPU / RAM đè lên ảnh GIF</div>
+            <div class="toggle-desc">Chèn trực tiếp vào bộ nhớ trước khi nạp vào màn hình LCD</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="swOverlay" onchange="onOverlayToggle()">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <div>
+          <div class="field-label">Vị trí thông số trên màn hình:</div>
+          <div class="segmented-control seg-3" id="overlayPosControl">
+            <button class="seg-btn active" onclick="setOverlayPos('bottom')">Dưới cùng</button>
+            <button class="seg-btn" onclick="setOverlayPos('center')">Ở giữa</button>
+            <button class="seg-btn" onclick="setOverlayPos('top')">Trên cùng</button>
+          </div>
+        </div>
+
+        <!-- Live hardware preview tags -->
+        <div class="telemetry-row">
+          <div class="telemetry-box">
+            <span class="label">CPU Usage</span>
+            <span class="value" id="boxCpu">0%</span>
+          </div>
+          <div class="telemetry-box">
+            <span class="label">GPU Temp</span>
+            <span class="value" id="boxGpu">0°C</span>
+          </div>
+          <div class="telemetry-box">
+            <span class="label">RAM Usage</span>
+            <span class="value" id="boxRam">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: Quick Presets Library -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            Thư Viện Ảnh Động Mẫu
+          </div>
+          <span style="font-size:12px;color:var(--accent);cursor:pointer;font-weight:600;" onclick="browseFile()">+ Tải file riêng</span>
+        </div>
+
+        <div class="presets-grid" id="presetList">
+          <!-- Populated dynamically via /api/status -->
+        </div>
+      </div>
+
+      <!-- SECTION 5: System Optimization & TRCC Purge -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Tối Ưu Hệ Thống & Khởi Động
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-text">
+            <div class="toggle-title">Khởi động cùng Windows (Chạy ngầm ở khay hệ thống)</div>
+            <div class="toggle-desc">Tự động kết nối và phát GIF ngay khi bật máy tính</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="swAutostart" onchange="onAutostartToggle()">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <div style="font-size: 13px; font-weight: 600;" id="trccTitle">Tiến trình TRCC gốc</div>
+            <div style="font-size: 11px; color: var(--text-tertiary);" id="trccStatusText">Đang kiểm tra...</div>
+          </div>
+          <button class="btn btn-danger" id="btnKillTrcc" onclick="killTrcc()">
+            Tắt Toàn Bộ TRCC
+          </button>
+        </div>
       </div>
 
     </div>
 
   </div>
 
-  <div id="toast">Thông báo</div>
+  <!-- Notification Toast -->
+  <div id="toast">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <span id="toastMsg">Thông báo</span>
+  </div>
 
   <script>
     let appState = {
@@ -873,61 +1042,68 @@
       overlay_position: 'bottom'
     };
 
-    // Tab Navigation
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-      event.currentTarget.classList.add('active');
-      document.getElementById('tab-' + tabId).classList.add('active');
-    }
-
-    // Toast Message
     function showToast(msg) {
       const t = document.getElementById('toast');
-      t.innerText = msg;
+      document.getElementById('toastMsg').innerText = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2500);
+      setTimeout(() => t.classList.remove('show'), 2400);
     }
 
-    // Fetch live status
+    // Refresh live status from Python backend
     async function updateStatus() {
       try {
         const res = await fetch('/api/status');
         const data = await res.json();
-        
-        // Status Badge
+
+        // 1. Connection status
         const connBadge = document.getElementById('connStatus');
         const connText = document.getElementById('connText');
         if (data.connected) {
-          connBadge.style.color = 'var(--accent-emerald)';
-          connBadge.style.borderColor = 'rgba(0, 255, 157, 0.25)';
+          connBadge.style.color = 'var(--success)';
+          connBadge.style.background = 'var(--success-subtle)';
+          connBadge.style.borderColor = 'rgba(16, 185, 129, 0.25)';
           connText.innerText = 'ĐÃ KẾT NỐI (0416:5302)';
         } else {
-          connBadge.style.color = 'var(--accent-crimson)';
-          connBadge.style.borderColor = 'rgba(255, 0, 85, 0.3)';
+          connBadge.style.color = 'var(--danger)';
+          connBadge.style.background = 'var(--danger-subtle)';
+          connBadge.style.borderColor = 'rgba(239, 68, 68, 0.3)';
           connText.innerText = 'CHƯA TÌM THẤY AIO';
         }
 
-        // Live Telemetry
+        // 2. Hardware telemetry
         if (data.stats) {
-          document.getElementById('hudCpuVal').innerText = Math.round(data.stats.cpu_usage) + '%';
-          document.getElementById('hudRamVal').innerText = Math.round(data.stats.ram_usage) + '%';
-          document.getElementById('hudGpuVal').innerText = Math.round(data.stats.gpu_temp) + '°C';
+          const cpu = Math.round(data.stats.cpu_usage) + '%';
+          const gpu = Math.round(data.stats.gpu_temp) + '°C';
+          const ram = Math.round(data.stats.ram_usage) + '%';
+
+          document.getElementById('topCpu').innerText = cpu;
+          document.getElementById('topGpu').innerText = gpu;
+          document.getElementById('topRam').innerText = ram;
+
+          document.getElementById('boxCpu').innerText = cpu;
+          document.getElementById('boxGpu').innerText = gpu;
+          document.getElementById('boxRam').innerText = ram;
         }
 
-        // TRCC Status
+        // 3. Autostart & TRCC status
+        document.getElementById('swAutostart').checked = !!data.autostart;
+        document.getElementById('swOverlay').checked = !!data.overlay_enabled;
+
         const trccText = document.getElementById('trccStatusText');
+        const killBtn = document.getElementById('btnKillTrcc');
         if (data.trcc_running) {
-          trccText.innerHTML = '<span style="color:#FF1744;font-weight:700;">⚠️ TRCC đang chạy ngầm</span> chiếm 150MB+ RAM và nhiều luồng CPU. Bấm nút dưới để giải phóng.';
+          trccText.innerHTML = '<span style="color:var(--danger);font-weight:600;">Đang chạy ngầm (tốn ~150MB RAM & CPU)</span>';
+          killBtn.style.display = 'inline-flex';
         } else {
-          trccText.innerHTML = '<span style="color:#00E676;font-weight:700;">✅ Tối ưu hoàn hảo:</span> TRCC đã tắt, máy tính của bạn đang chạy ở trạng thái nhẹ nhất.';
+          trccText.innerHTML = '<span style="color:var(--success);font-weight:600;">Đã tắt hoàn toàn (Hệ thống tối ưu)</span>';
+          killBtn.style.display = 'none';
         }
 
-        // Presets list rendering
+        // 4. Populate presets if empty
         renderPresets(data.presets);
 
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        console.warn("Status update error:", err);
       }
     }
 
@@ -941,35 +1117,46 @@
         card.onclick = () => selectPreset(p.id);
         card.innerHTML = `
           <img class="preset-thumb" src="/${p.file}" alt="${p.name}">
-          <div class="preset-name">${p.name}</div>
+          <div class="preset-name" title="${p.name}">${p.name}</div>
         `;
         container.appendChild(card);
       });
     }
 
-    // Live preview refresh loop
-    function refreshPreview() {
+    // Refresh live screen frame
+    function refreshLiveFeed() {
       const img = document.getElementById('livePreview');
       img.src = '/api/preview?t=' + Date.now();
     }
-    setInterval(refreshPreview, 100);
+    setInterval(refreshLiveFeed, 100);
     setInterval(updateStatus, 1500);
     updateStatus();
 
-    // Controls
+    // Orientation change
     async function setRotation(deg) {
       appState.rotation = deg;
-      document.querySelectorAll('#rotGroup .seg-item').forEach((b, i) => {
-        b.classList.toggle('active', [0, 90, 180, 270][i] === deg);
+      
+      // Update UI segmented buttons
+      const rotButtons = document.querySelectorAll('#rotControl .seg-btn');
+      [0, 90, 180, 270].forEach((d, idx) => {
+        if (rotButtons[idx]) rotButtons[idx].classList.toggle('active', d === deg);
       });
+
+      // Update Screen orientation aspect ratio
+      const panel = document.getElementById('screenPanel');
+      const resLabel = document.getElementById('screenRes');
+      const isPortrait = (deg === 90 || deg === 270);
+
+      panel.classList.toggle('portrait', isPortrait);
+      resLabel.innerText = isPortrait ? '240 × 320 (Dọc)' : '320 × 240 (Ngang)';
       document.getElementById('hudRot').innerText = deg + '°';
-      document.getElementById('screenBox').style.transform = `rotate(${deg}deg)`;
+
       await fetch('/api/set_rotation', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({rotation: deg})
       });
-      showToast(`Đã xoay ${deg}°`);
+      showToast(`Đã đổi góc xoay ${deg}°`);
     }
 
     function quickRotate() {
@@ -977,9 +1164,10 @@
       setRotation(next);
     }
 
+    // Fit Mode change
     async function setFit(mode) {
       appState.fit_mode = mode;
-      document.querySelectorAll('#fitGroup .seg-item').forEach(b => {
+      document.querySelectorAll('#fitControl .seg-btn').forEach(b => {
         b.classList.toggle('active', b.innerText.toLowerCase().includes(mode));
       });
       await fetch('/api/set_fit_mode', {
@@ -987,37 +1175,40 @@
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({fit_mode: mode})
       });
-      showToast(`Chế độ vừa: ${mode}`);
+      showToast(`Đã chọn tỷ lệ: ${mode.toUpperCase()}`);
     }
 
-    let fpsDebounce = null;
+    // Frame rate change
+    let fpsTimer = null;
     function onFpsChange(val) {
       document.getElementById('valFps').innerText = val + ' FPS';
       document.getElementById('hudFps').innerText = val + ' FPS';
-      clearTimeout(fpsDebounce);
-      fpsDebounce = setTimeout(async () => {
+      clearTimeout(fpsTimer);
+      fpsTimer = setTimeout(async () => {
         await fetch('/api/set_fps', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({fps: parseInt(val)})
         });
-      }, 200);
+      }, 150);
     }
 
-    let briDebounce = null;
+    // Brightness change
+    let briTimer = null;
     function onBriChange(val) {
       document.getElementById('valBri').innerText = val + '%';
-      document.getElementById('screenBox').style.filter = `brightness(${val}%)`;
-      clearTimeout(briDebounce);
-      briDebounce = setTimeout(async () => {
+      document.getElementById('screenPanel').style.filter = `brightness(${val}%)`;
+      clearTimeout(briTimer);
+      briTimer = setTimeout(async () => {
         await fetch('/api/set_brightness', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({brightness: parseInt(val)})
         });
-      }, 200);
+      }, 150);
     }
 
+    // Overlay Toggle
     async function onOverlayToggle() {
       const en = document.getElementById('swOverlay').checked;
       await fetch('/api/set_overlay', {
@@ -1025,12 +1216,12 @@
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({enabled: en, position: appState.overlay_position})
       });
-      showToast(en ? "Đã bật hiển thị HUD" : "Đã tắt hiển thị HUD");
+      showToast(en ? "Đã bật lớp phủ thông số" : "Đã tắt lớp phủ thông số");
     }
 
     async function setOverlayPos(pos) {
       appState.overlay_position = pos;
-      document.querySelectorAll('#overlayPosGroup .seg-item').forEach(b => {
+      document.querySelectorAll('#overlayPosControl .seg-btn').forEach(b => {
         b.classList.toggle('active', b.innerText.toLowerCase().includes(pos === 'bottom' ? 'dưới' : (pos === 'top' ? 'trên' : 'giữa')));
       });
       const en = document.getElementById('swOverlay').checked;
@@ -1041,6 +1232,7 @@
       });
     }
 
+    // Preset selection
     async function selectPreset(id) {
       showToast("Đang nạp ảnh mẫu...");
       const res = await fetch('/api/select_preset', {
@@ -1050,26 +1242,29 @@
       });
       const data = await res.json();
       if (data.status === 'ok') {
-        showToast("Đã áp dụng ảnh mẫu!");
+        showToast("Đã áp dụng mẫu thành công!");
       }
     }
 
+    // Browse File Dialog
     async function browseFile() {
-      showToast("Đang mở trình chọn tệp...");
+      showToast("Đang mở hộp thoại chọn tệp...");
       const res = await fetch('/api/browse_file', {method: 'POST'});
       const data = await res.json();
       if (data.status === 'ok') {
-        showToast(`Đã tải: ${data.filename}`);
+        showToast(`Đã áp dụng: ${data.filename}`);
       }
     }
 
+    // Terminate official TRCC
     async function killTrcc() {
       const res = await fetch('/api/kill_trcc', {method: 'POST'});
       const data = await res.json();
-      showToast(`Đã đóng ${data.killed_count} tiến trình TRCC!`);
+      showToast(`Đã dừng ${data.killed_count} tiến trình TRCC!`);
       updateStatus();
     }
 
+    // Autostart toggle
     async function onAutostartToggle() {
       const en = document.getElementById('swAutostart').checked;
       await fetch('/api/set_autostart', {
@@ -1077,18 +1272,17 @@
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({enabled: en})
       });
-      showToast(en ? "Đã bật tự khởi động" : "Đã tắt tự khởi động");
+      showToast(en ? "Đã bật tự khởi động cùng Windows" : "Đã tắt tự khởi động");
     }
 
-    // Drag and Drop Handling
-    const dropArea = document.getElementById('screenBox');
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      dropArea.addEventListener(eventName, e => e.preventDefault(), false);
+    // Drag and Drop
+    const dropTarget = document.getElementById('screenPanel');
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+      dropTarget.addEventListener(evt, e => e.preventDefault(), false);
     });
 
-    dropArea.addEventListener('drop', async e => {
-      const dt = e.dataTransfer;
-      const files = dt.files;
+    dropTarget.addEventListener('drop', async e => {
+      const files = e.dataTransfer.files;
       if (files.length > 0) {
         const file = files[0];
         const formData = new FormData();
@@ -1100,11 +1294,10 @@
         });
         const data = await res.json();
         if (data.status === 'ok') {
-          showToast("Đã áp dụng: " + data.filename);
+          showToast("Đã nạp ảnh thành công: " + data.filename);
         }
       }
     });
   </script>
 </body>
 </html>
-
