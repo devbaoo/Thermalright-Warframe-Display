@@ -4,6 +4,7 @@ Powered by Bottle (lightweight, zero-overhead, in-process).
 """
 
 import os
+import sys
 import io
 import json
 import threading
