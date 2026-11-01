@@ -1033,6 +1033,7 @@
   </div>
 
   <script>
+    let initialSyncDone = false;
     let appState = {
       rotation: 0,
       fit_mode: 'fill',
@@ -1054,6 +1055,48 @@
       try {
         const res = await fetch('/api/status');
         const data = await res.json();
+
+        // One-time initial UI sync from persisted backend configuration
+        if (!initialSyncDone) {
+          initialSyncDone = true;
+          appState.rotation = data.rotation;
+          appState.fit_mode = data.fit_mode;
+          appState.fps = data.fps;
+          appState.brightness = data.brightness;
+          appState.overlay_enabled = data.overlay_enabled;
+          appState.overlay_position = data.overlay_position;
+
+          // Apply initial orientation UI
+          const isPortrait = (data.rotation === 90 || data.rotation === 270);
+          document.getElementById('screenPanel').classList.toggle('portrait', isPortrait);
+          document.getElementById('screenRes').innerText = isPortrait ? '240 × 320 (Dọc)' : '320 × 240 (Ngang)';
+          document.getElementById('hudRot').innerText = data.rotation + '°';
+          const rotButtons = document.querySelectorAll('#rotControl .seg-btn');
+          [0, 90, 180, 270].forEach((d, idx) => {
+            if (rotButtons[idx]) rotButtons[idx].classList.toggle('active', d === data.rotation);
+          });
+
+          // Apply initial fit mode UI
+          document.querySelectorAll('#fitControl .seg-btn').forEach(b => {
+            b.classList.toggle('active', b.innerText.toLowerCase().includes(data.fit_mode));
+          });
+
+          // Apply initial sliders
+          document.getElementById('sliderFps').value = data.fps;
+          document.getElementById('valFps').innerText = data.fps + ' FPS';
+          document.getElementById('hudFps').innerText = data.fps + ' FPS';
+
+          document.getElementById('sliderBri').value = data.brightness;
+          document.getElementById('valBri').innerText = data.brightness + '%';
+          document.getElementById('screenPanel').style.filter = `brightness(${data.brightness}%)`;
+
+          // Apply overlay pos
+          document.querySelectorAll('#overlayPosControl .seg-btn').forEach(b => {
+            b.classList.toggle('active', b.innerText.toLowerCase().includes(
+              data.overlay_position === 'bottom' ? 'dưới' : (data.overlay_position === 'top' ? 'trên' : 'giữa')
+            ));
+          });
+        }
 
         // 1. Connection status
         const connBadge = document.getElementById('connStatus');
@@ -1190,7 +1233,7 @@
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({fps: parseInt(val)})
         });
-      }, 150);
+      }, 250);
     }
 
     // Brightness change
@@ -1205,7 +1248,7 @@
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({brightness: parseInt(val)})
         });
-      }, 150);
+      }, 250);
     }
 
     // Overlay Toggle

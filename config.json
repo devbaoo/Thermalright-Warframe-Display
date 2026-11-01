@@ -5,7 +5,7 @@
   "brightness": 1.0,
   "fps_override": 20,
   "overlay_enabled": false,
-  "overlay_position": "bottom",
+  "overlay_position": "center",
   "minimize_to_tray": true,
   "autostart": true
 }

@@ -181,51 +181,58 @@ class WarframeControllerApp:
         last_web_preview = 0
 
         while self.running:
-            if not self.is_playing or not self.processor.frames:
-                time.sleep(0.04)
-                continue
+            try:
+                if not self.is_playing:
+                    time.sleep(0.05)
+                    continue
 
-            frame_data = self.processor.get_frame(self.current_frame_index)
-            if not frame_data:
-                time.sleep(0.04)
-                continue
+                frame_data = self.processor.get_frame(self.current_frame_index)
+                if not frame_data:
+                    time.sleep(0.04)
+                    continue
 
-            # Overlay handling
-            overlay_en = self.config.get("overlay_enabled", False)
-            if overlay_en:
-                stats = self.monitor.get_stats()
-                pos = self.config.get("overlay_position", "bottom")
-                pil_display, rgb565_bytes = self.processor.render_overlay_frame(
-                    self.current_frame_index,
-                    cpu_usage=stats["cpu_usage"],
-                    cpu_temp=stats["gpu_temp"],
-                    ram_usage=stats["ram_usage"],
-                    position=pos
-                )
-            else:
-                pil_display = frame_data.pil_image
-                rgb565_bytes = frame_data.rgb565_bytes
+                # Overlay handling
+                overlay_en = self.config.get("overlay_enabled", False)
+                if overlay_en:
+                    stats = self.monitor.get_stats()
+                    pos = self.config.get("overlay_position", "bottom")
+                    pil_preview, rgb565_bytes = self.processor.render_overlay_frame(
+                        self.current_frame_index,
+                        cpu_usage=stats["cpu_usage"],
+                        cpu_temp=stats["gpu_temp"],
+                        ram_usage=stats["ram_usage"],
+                        position=pos
+                    )
+                else:
+                    pil_preview = frame_data.preview_image
+                    rgb565_bytes = frame_data.rgb565_bytes
 
-            # 1. Send directly to hardware LCD over WinUSB if connected
-            if not self.driver.is_connected():
-                # Attempt background reconnect every 5s
-                if time.time() - self.driver.last_send_time > 5.0:
-                    self.driver.connect()
-            else:
-                self.driver.send_frame(rgb565_bytes)
+                # 1. Send directly to hardware LCD over WinUSB if connected
+                if not self.driver.is_connected():
+                    # Attempt background reconnect every 2s
+                    if time.time() - self.driver.last_send_time > 2.0:
+                        self.driver.connect()
+                else:
+                    self.driver.send_frame(rgb565_bytes)
 
-            # 2. Update web preview image at ~10 FPS to minimize CPU
-            now = time.time()
-            if now - last_web_preview >= 0.10:
-                last_web_preview = now
-                self.server.set_preview_image(pil_display)
+                # 2. Update web preview image at ~10 FPS to minimize CPU
+                now = time.time()
+                if now - last_web_preview >= 0.10:
+                    last_web_preview = now
+                    self.server.set_preview_image(pil_preview)
 
-            # Advance frame
-            self.current_frame_index = (self.current_frame_index + 1) % len(self.processor.frames)
+                # Advance frame
+                total = len(self.processor.frames)
+                if total > 0:
+                    self.current_frame_index = (self.current_frame_index + 1) % total
 
-            # Target frame sleep
-            dur_sec = max(0.015, frame_data.duration_ms / 1000.0)
-            time.sleep(dur_sec)
+                # Target frame sleep
+                dur_sec = max(0.015, frame_data.duration_ms / 1000.0)
+                time.sleep(dur_sec)
+
+            except Exception as e:
+                logger.error(f"Error in display streaming loop: {e}")
+                time.sleep(0.05)
 
     def _run_tray_or_wait(self):
         if pystray is None:

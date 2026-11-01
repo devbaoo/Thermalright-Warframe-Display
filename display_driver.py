@@ -103,6 +103,12 @@ class WarframeDisplayDriver:
         self.connected = False
         logger.info("Disconnected from display.")
 
+    def reconnect(self) -> bool:
+        """Safely reset and reconnect to display."""
+        self.disconnect()
+        time.sleep(0.1)
+        return self.connect()
+
     @staticmethod
     def pil_to_rgb565(pil_image: Image.Image, brightness: float = 1.0) -> bytes:
         """
@@ -170,13 +176,22 @@ class WarframeDisplayDriver:
                 handle = self._dev_handle
                 transferred = self._c_transferred_ptr
 
+                all_ok = True
                 for ptr in self._c_ptrs:
-                    fn(handle, EP_WRITE, ptr, USB_CHUNK_SIZE, transferred, 100)
+                    ret = fn(handle, EP_WRITE, ptr, USB_CHUNK_SIZE, transferred, 150)
+                    if ret != 0:
+                        all_ok = False
+                        break
 
-                self.last_send_time = time.time()
-                return True
+                if all_ok:
+                    self.last_send_time = time.time()
+                    return True
+                else:
+                    logger.warning(f"Fast-path chunk write failed with error {ret}, resetting handle...")
+                    self.disconnect()
             except Exception as e:
-                logger.warning(f"Fast-path write failed, falling back: {e}")
+                logger.warning(f"Fast-path write exception: {e}")
+                self.disconnect()
 
         # SLOW-PATH: Standard pyusb chunked write
         view = memoryview(packet)
@@ -188,7 +203,7 @@ class WarframeDisplayDriver:
             return True
         except Exception as e:
             logger.warning(f"Failed to write frame: {e}")
-            self.connected = False
+            self.disconnect()
             return False
 
     def send_pil_image(self, pil_image: Image.Image, brightness: float = 1.0) -> bool:
