@@ -10,6 +10,7 @@ import os
 import time
 import socket
 import logging
+import tempfile
 import threading
 import subprocess
 import urllib.request
@@ -90,9 +91,11 @@ def launch_browser_app(url=f"http://127.0.0.1:{PORT}"):
             break
 
     if browser_exe:
+        profile_dir = os.path.join(tempfile.gettempdir(), "WarframeAIO_EdgeApp")
         cmd = [
             browser_exe,
             f"--app={url}",
+            f"--user-data-dir={profile_dir}",
             "--window-size=1080,720",
             "--disable-features=TranslateUI"
         ]
@@ -172,9 +175,6 @@ class WarframeControllerApp:
 
     def open_window(self):
         """Open or refocus the standalone Control Deck Window."""
-        if self.browser_proc is not None and self.browser_proc.poll() is None:
-            # Already running
-            return
         self.browser_proc = launch_browser_app(f"http://127.0.0.1:{PORT}")
 
     def _display_loop(self):
@@ -302,8 +302,9 @@ def main():
         if not minimized:
             # Wake up window on existing instance
             woken = request_open_window()
-            # Also launch browser directly as a failsafe
-            launch_browser_app()
+            if not woken:
+                launch_browser_app()
+            time.sleep(0.5)
         sys.exit(0)
 
     try:
