@@ -9,6 +9,8 @@ import (
 	"image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	_ "golang.org/x/image/bmp"
+	_ "golang.org/x/image/webp"
 	"os"
 	"sync"
 
@@ -174,7 +176,7 @@ func (p *Processor) LoadFile(filePath string, rot int, fit string, bri float64, 
 		rgba := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 		draw.Draw(rgba, rgba.Bounds(), img, b.Min, draw.Src)
 		origs = append(origs, rgba)
-		durs = append(durs, 100)
+		durs = append(durs, 50) // 50ms keepalive for static images
 		animated = false
 	}
 

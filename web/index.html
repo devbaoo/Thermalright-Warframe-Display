@@ -1353,16 +1353,46 @@
       const data = await res.json();
       if (data.status === 'ok') {
         showToast("Đã áp dụng mẫu thành công!");
+        updateStatus();
+      }
+    }
+
+    // Media File Upload & Native Browser Picker
+    const mediaInput = document.getElementById('mediaUploadInput');
+    if (mediaInput) {
+      mediaInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        await uploadMediaFile(file);
+        mediaInput.value = '';
+      });
+    }
+
+    async function uploadMediaFile(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      showToast("Đang tải lên " + file.name + "...");
+      try {
+        const res = await fetch('/api/upload_file', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          showToast("Đã nạp ảnh thành công: " + (data.filename || file.name));
+          updateStatus();
+        } else {
+          showToast("Lỗi nạp ảnh: " + (data.message || "Không xác định"), true);
+        }
+      } catch (err) {
+        showToast("Lỗi kết nối khi tải ảnh", true);
       }
     }
 
     // Browse File Dialog
-    async function browseFile() {
-      showToast("Đang mở hộp thoại chọn tệp...");
-      const res = await fetch('/api/browse_file', {method: 'POST'});
-      const data = await res.json();
-      if (data.status === 'ok') {
-        showToast(`Đã áp dụng: ${data.filename}`);
+    function browseFile() {
+      if (mediaInput) {
+        mediaInput.click();
       }
     }
 
@@ -1394,20 +1424,10 @@
     dropTarget.addEventListener('drop', async e => {
       const files = e.dataTransfer.files;
       if (files.length > 0) {
-        const file = files[0];
-        const formData = new FormData();
-        formData.append('file', file);
-        showToast("Đang tải lên " + file.name + "...");
-        const res = await fetch('/api/upload_file', {
-          method: 'POST',
-          body: formData
-        });
-        const data = await res.json();
-        if (data.status === 'ok') {
-          showToast("Đã nạp ảnh thành công: " + data.filename);
-        }
+        await uploadMediaFile(files[0]);
       }
     });
   </script>
+  <input type="file" id="mediaUploadInput" accept=".gif,.png,.jpg,.jpeg,.webp,.bmp" style="display:none">
 </body>
 </html>

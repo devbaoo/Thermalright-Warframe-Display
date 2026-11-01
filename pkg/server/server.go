@@ -341,7 +341,12 @@ func (s *Server) handleUploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	userDir := filepath.Join("assets", "user_uploads")
+	exePath, _ := os.Executable()
+	baseDir := "."
+	if exePath != "" {
+		baseDir = filepath.Dir(exePath)
+	}
+	userDir := filepath.Join(baseDir, "assets", "user_uploads")
 	_ = os.MkdirAll(userDir, 0755)
 	destPath := filepath.Join(userDir, handler.Filename)
 
@@ -402,6 +407,9 @@ func (s *Server) loadFile(path string) {
 		s.cfgMgr.Update(func(c *config.Config) {
 			c.LastFile = path
 		})
+		log.Printf("[Server] Successfully loaded file: %s (frames: %d)", path, s.processor.FrameCount())
+	} else {
+		log.Printf("[Server] Failed to load file %s: %v", path, err)
 	}
 }
 

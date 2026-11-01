@@ -17,41 +17,43 @@ import (
 var embeddedLibusb []byte
 
 const (
-	VID               = 0x0416
-	PID               = 0x5302
-	EPWrite           = 0x02
-	ChunkSize         = 512
-	PanelWidth        = 240
-	PanelHeight       = 320
-	PayloadSize       = PanelWidth * PanelHeight * 2 // 153600 bytes
-	TotalPacketSize   = 154112
-	CmdTypePicture    = 0x0002
-	ModeRGB565        = 0x0001
+	VID             = 0x0416
+	PID             = 0x5302
+	EPWrite         = 0x02
+	ChunkSize       = 512
+	PanelWidth      = 240
+	PanelHeight     = 320
+	PayloadSize     = PanelWidth * PanelHeight * 2 // 153600 bytes
+	TotalPacketSize = 154112
+	CmdTypePicture  = 0x0002
+	ModeRGB565      = 0x0001
 )
 
 type Driver struct {
-	mu           sync.Mutex
-	dllHandle    syscall.Handle
-	procInit     uintptr
-	procOpen     uintptr
-	procClose    uintptr
-	procExit     uintptr
-	procSetCfg   uintptr
-	procTransfer uintptr
+	mu                   sync.Mutex
+	dllHandle            syscall.Handle
+	procInit             uintptr
+	procOpen             uintptr
+	procClose            uintptr
+	procExit             uintptr
+	procSetCfg           uintptr
+	procClaimInterface   uintptr
+	procReleaseInterface uintptr
+	procTransfer         uintptr
 
 	ctx          uintptr
 	devHandle    uintptr
 	connected    bool
 	lastSendTime time.Time
+	consecErrors int
 
-	rawPacket    []byte
+	rawPacket []byte
 }
 
 func NewDriver() *Driver {
 	d := &Driver{
 		rawPacket: make([]byte, TotalPacketSize),
 	}
-	// Initialize static header once
 	d.initHeader()
 	return d
 }
@@ -103,6 +105,8 @@ func (d *Driver) loadDLL() error {
 	d.procClose, _ = syscall.GetProcAddress(h, "libusb_close")
 	d.procExit, _ = syscall.GetProcAddress(h, "libusb_exit")
 	d.procSetCfg, _ = syscall.GetProcAddress(h, "libusb_set_configuration")
+	d.procClaimInterface, _ = syscall.GetProcAddress(h, "libusb_claim_interface")
+	d.procReleaseInterface, _ = syscall.GetProcAddress(h, "libusb_release_interface")
 	d.procTransfer, _ = syscall.GetProcAddress(h, "libusb_interrupt_transfer")
 
 	var ctx uintptr
@@ -136,8 +140,17 @@ func (d *Driver) Connect() bool {
 	// Set configuration (ignore error if already set)
 	syscall.SyscallN(d.procSetCfg, handle, 1)
 
+	// Claim interface 0 for endpoint 0x02
+	if d.procClaimInterface != 0 {
+		rClaim, _, _ := syscall.SyscallN(d.procClaimInterface, handle, 0)
+		if int32(rClaim) != 0 {
+			log.Printf("[USB] Info: libusb_claim_interface res=%d", int32(rClaim))
+		}
+	}
+
 	d.devHandle = handle
 	d.connected = true
+	d.consecErrors = 0
 	log.Printf("[USB] Successfully connected to Thermalright Frozen Warframe (0x%04X:0x%04X)", VID, PID)
 	return true
 }
@@ -147,6 +160,9 @@ func (d *Driver) Disconnect() {
 	defer d.mu.Unlock()
 
 	if d.devHandle != 0 {
+		if d.procReleaseInterface != 0 {
+			syscall.SyscallN(d.procReleaseInterface, d.devHandle, 0)
+		}
 		syscall.SyscallN(d.procClose, d.devHandle)
 		d.devHandle = 0
 	}
@@ -181,27 +197,47 @@ func (d *Driver) SendFrame(rgb565Data []byte) bool {
 
 	for offset := uintptr(0); offset < TotalPacketSize; offset += ChunkSize {
 		chunkPtr := basePtr + offset
-		r, _, _ := syscall.SyscallN(
-			d.procTransfer,
-			d.devHandle,
-			uintptr(EPWrite),
-			chunkPtr,
-			uintptr(ChunkSize),
-			ptrTransferred,
-			uintptr(150), // 150ms timeout
-		)
+		var lastErr int32
+		chunkOk := false
 
-		if int32(r) != 0 {
-			log.Printf("[USB] Transfer error code %d at chunk %d, disconnecting...", int32(r), offset/ChunkSize)
-			if d.devHandle != 0 {
-				syscall.SyscallN(d.procClose, d.devHandle)
-				d.devHandle = 0
+		// Retry chunk up to 3 times with 500ms timeout
+		for retry := 0; retry < 3; retry++ {
+			r, _, _ := syscall.SyscallN(
+				d.procTransfer,
+				d.devHandle,
+				uintptr(EPWrite),
+				chunkPtr,
+				uintptr(ChunkSize),
+				ptrTransferred,
+				uintptr(500), // 500ms timeout
+			)
+			lastErr = int32(r)
+			if lastErr == 0 {
+				chunkOk = true
+				break
 			}
-			d.connected = false
+			time.Sleep(1 * time.Millisecond)
+		}
+
+		if !chunkOk {
+			d.consecErrors++
+			log.Printf("[USB] Transfer error code %d at chunk %d/301 (consec: %d)", lastErr, offset/ChunkSize, d.consecErrors)
+			// Disconnect only on repeated failures or device detached
+			if d.consecErrors >= 3 || lastErr == -4 { // -4: LIBUSB_ERROR_NO_DEVICE
+				if d.devHandle != 0 {
+					if d.procReleaseInterface != 0 {
+						syscall.SyscallN(d.procReleaseInterface, d.devHandle, 0)
+					}
+					syscall.SyscallN(d.procClose, d.devHandle)
+					d.devHandle = 0
+				}
+				d.connected = false
+			}
 			return false
 		}
 	}
 
+	d.consecErrors = 0
 	d.lastSendTime = time.Now()
 	return true
 }
@@ -210,4 +246,3 @@ func fileExists(p string) bool {
 	info, err := os.Stat(p)
 	return err == nil && !info.IsDir()
 }
-
