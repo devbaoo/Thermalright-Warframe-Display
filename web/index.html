@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thermalright Frozen Warframe 360 SE - Pro Max Control Deck</title>
+  <style>
+    :root {
+      --bg-dark: #080A0F;
+      --panel-bg: rgba(16, 21, 32, 0.75);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --accent-cyan: #00F0FF;
+      --accent-cyan-glow: rgba(0, 240, 255, 0.35);
+      --accent-purple: #9D00FF;
+      --accent-emerald: #00FF9D;
+      --accent-crimson: #FF0055;
+      --text-main: #FFFFFF;
+      --text-muted: #8E9BAE;
+      --text-dim: #4B5565;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      overflow-x: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(0, 240, 255, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(157, 0, 255, 0.08) 0%, transparent 40%);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0, 240, 255, 0.4); }
+
+    /* Top Navigation Header */
+    header {
+      height: 64px;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(10, 13, 20, 0.85);
+      backdrop-filter: blur(20px);
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #00F0FF, #9D00FF);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(0, 255, 157, 0.1);
+      border: 1px solid rgba(0, 255, 157, 0.25);
+      color: var(--accent-emerald);
+      transition: all 0.3s;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 10px var(--accent-emerald);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* Main Container */
+    .app-container {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      gap: 24px;
+      padding: 24px 28px;
+      height: calc(100vh - 64px);
+      overflow: hidden;
+    }
+
+    /* Left Side: AIO Pump Simulation */
+    .pump-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      backdrop-filter: blur(24px);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    /* Hardware AIO Bezel */
+    .pump-head {
+      width: 370px;
+      height: 370px;
+      border-radius: 50%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, #1a1e27 40%, #0d1017 85%, #05070a 100%);
+      box-shadow: 
+        0 25px 60px rgba(0, 0, 0, 0.9),
+        inset 0 2px 4px rgba(255, 255, 255, 0.15),
+        inset 0 -4px 8px rgba(0, 0, 0, 0.9);
+      border: 3px solid #232936;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Industrial Screws */
+    .screw {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #333a47;
+      box-shadow: inset 0 1px 2px #555e70, 0 1px 2px #000;
+    }
+    .screw-tl { top: 20px; left: 20px; }
+    .screw-tr { top: 20px; right: 20px; }
+    .screw-bl { bottom: 20px; left: 20px; }
+    .screw-br { bottom: 20px; right: 20px; }
+
+    /* Animated RGB Halo Ring */
+    .argb-ring {
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      padding: 3px;
+      background: conic-gradient(from 0deg, #00F0FF, #9D00FF, #FF0055, #00FF9D, #00F0FF);
+      animation: rotateRing 6s linear infinite;
+      box-shadow: 0 0 30px var(--accent-cyan-glow);
+    }
+
+    @keyframes rotateRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Screen Frame */
+    .screen-mount {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: #090B10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9);
+      overflow: hidden;
+    }
+
+    /* The actual 320x240 LCD display canvas */
+    .screen-canvas-box {
+      width: 256px;
+      height: 192px;
+      position: relative;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .screen-canvas-box:hover {
+      box-shadow: 0 0 30px var(--accent-cyan-glow);
+    }
+
+    #livePreview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Drag & Drop overlay on screen */
+    .drop-hint {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      color: var(--accent-cyan);
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      padding: 10px;
+      border: 2px dashed var(--accent-cyan);
+      border-radius: 12px;
+    }
+
+    .screen-canvas-box:hover .drop-hint {
+      opacity: 0.9;
+    }
+
+    /* Live HUD Overlay details */
+    .screen-meta {
+      position: absolute;
+      bottom: 8px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .pill-badge {
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--accent-cyan);
+    }
+
+    /* Pump stage action bar */
+    .pump-actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 370px;
+    }
+
+    /* Right Side: Tabbed Deck */
+    .control-deck {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: 100%;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    /* Tab switcher */
+    .nav-tabs {
+      display: flex;
+      background: rgba(16, 21, 32, 0.85);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      padding: 4px;
+      gap: 6px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      height: 38px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.25s;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(157, 0, 255, 0.15));
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      color: var(--accent-cyan);
+      box-shadow: 0 4px 15px rgba(0, 240, 255, 0.1);
+    }
+
+    /* Tab content panes */
+    .tab-pane {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .tab-pane.active {
+      display: flex;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      padding: 20px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* File Drop Zone */
+    .upload-zone {
+      border: 2px dashed rgba(0, 240, 255, 0.3);
+      border-radius: 14px;
+      padding: 24px 16px;
+      text-align: center;
+      background: rgba(0, 240, 255, 0.02);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .upload-zone:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.06);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+    }
+
+    .upload-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .upload-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Presets Grid */
+    .presets-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .preset-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.25s;
+    }
+
+    .preset-card:hover {
+      background: rgba(0, 240, 255, 0.08);
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+    }
+
+    .preset-thumb {
+      width: 44px;
+      height: 33px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #000;
+    }
+
+    .preset-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Segmented Button Groups */
+    .segmented {
+      display: flex;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .seg-item {
+      flex: 1;
+      height: 34px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .seg-item:hover {
+      color: var(--text-main);
+    }
+
+    .seg-item.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--accent-cyan);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Custom Slider */
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .slider-val {
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 12px var(--accent-cyan);
+      transition: transform 0.1s;
+    }
+
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Switches */
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+    }
+
+    .switch-label {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider-toggle {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .3s;
+      border-radius: 24px;
+    }
+
+    .slider-toggle:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider-toggle {
+      background-color: var(--accent-cyan);
+    }
+
+    input:checked + .slider-toggle:before {
+      transform: translateX(20px);
+    }
+
+    /* Buttons */
+    .btn {
+      height: 42px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.25s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #00C853, #00E676);
+      color: #000;
+      box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 6px 25px rgba(0, 230, 118, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #D32F2F, #FF1744);
+      color: #FFF;
+      box-shadow: 0 4px 15px rgba(255, 23, 68, 0.3);
+    }
+    .btn-danger:hover {
+      box-shadow: 0 6px 25px rgba(255, 23, 68, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border: 1px solid var(--panel-border);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Hardware Telemetry Meter Grid */
+    .gauges-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .gauge-box {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .gauge-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      margin: 4px 0;
+    }
+
+    .gauge-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Notification Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      background: rgba(16, 21, 32, 0.95);
+      border: 1px solid var(--accent-cyan);
+      border-radius: 12px;
+      color: #FFF;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
+    }
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">❄️</div>
+      <div>
+        <div class="brand-title">WARFRAME 360 SE // CONTROL DECK</div>
+        <div class="brand-subtitle">THERMALRIGHT NATIVE ARGB DISPLAY</div>
+      </div>
+    </div>
+
+    <div id="connStatus" class="status-badge">
+      <div class="status-dot"></div>
+      <span id="connText">ĐÃ KẾT NỐI (0416:5302)</span>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <div class="app-container">
+    
+    <!-- LEFT: Virtual AIO Simulation -->
+    <div class="pump-stage">
+      
+      <div class="pump-head">
+        <!-- Corner Screws -->
+        <div class="screw screw-tl"></div>
+        <div class="screw screw-tr"></div>
+        <div class="screw screw-bl"></div>
+        <div class="screw screw-br"></div>
+
+        <!-- Glowing ARGB Halo -->
+        <div class="argb-ring"></div>
+
+        <!-- Inner Mount & Screen Canvas -->
+        <div class="screen-mount">
+          <div class="screen-canvas-box" id="screenBox" onclick="browseFile()">
+            <img id="livePreview" src="/api/preview" alt="AIO Screen Live Feed">
+            <div class="drop-hint">
+              <span>📂 Nhấp hoặc Kéo thả GIF vào đây</span>
+            </div>
+            <div class="screen-meta">
+              <span class="pill-badge" id="hudRot">0°</span>
+              <span class="pill-badge" id="hudFps">20 FPS</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="pump-actions">
+        <button class="btn btn-secondary" style="flex:1" onclick="quickRotate()">🔄 Xoay 90°</button>
+        <button class="btn btn-primary" style="flex:1" onclick="browseFile()">📁 Chọn Tệp Mới</button>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Control Deck Tabs -->
+    <div class="control-deck">
+      
+      <!-- Nav Tabs -->
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('media')">🖼️ GIF & Hình Ảnh</button>
+        <button class="tab-btn" onclick="switchTab('telemetry')">📊 Thông Số (HUD)</button>
+        <button class="tab-btn" onclick="switchTab('system')">⚡ Tối Ưu Hệ Thống</button>
+      </div>
+
+      <!-- TAB 1: Media & GIF -->
+      <div id="tab-media" class="tab-pane active">
+        
+        <!-- Presets Card -->
+        <div class="card">
+          <div class="card-title">
+            <span>Thư Viện Ảnh Mẫu (Presets)</span>
+            <span style="font-size:11px;color:var(--accent-cyan);cursor:pointer;" onclick="browseFile()">+ Tải file riêng</span>
+          </div>
+          <div class="presets-grid" id="presetList">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Orientation & Scaling Card -->
+        <div class="card">
+          <div class="card-title">Hướng Xoay & Căn Chỉnh Khung Hình</div>
+          
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Góc xoay màn hình (Orientation):</div>
+          <div class="segmented" id="rotGroup">
+            <button class="seg-item active" onclick="setRotation(0)">0° (Ngang)</button>
+            <button class="seg-item" onclick="setRotation(90)">90°</button>
+            <button class="seg-item" onclick="setRotation(180)">180°</button>
+            <button class="seg-item" onclick="setRotation(270)">270°</button>
+          </div>
+
+          <div style="font-size:12px;color:var(--text-muted);margin:14px 0 6px;">Chế độ vừa khung (Fit Mode):</div>
+          <div class="segmented" id="fitGroup">
+            <button class="seg-item active" onclick="setFit('fill')">Cắt vừa (Fill)</button>
+            <button class="seg-item" onclick="setFit('fit')">Giữ tỷ lệ (Fit)</button>
+            <button class="seg-item" onclick="setFit('stretch')">Kéo giãn</button>
+          </div>
+        </div>
+
+        <!-- Display Sliders Card -->
+        <div class="card">
+          <div class="card-title">Tốc Độ & Độ Sáng Màn Hình</div>
+
+          <div class="slider-row">
+            <div class="slider-header">
+              <span>Tốc độ khung hình (Frame Rate):</span>
+              <span class="slider-val" id="valFps">20 FPS</span>
+            </div>
+            <input type="range" id="sliderFps" min="5" max="30" value="20" oninput="onFpsChange(this.value)">
+          </div>
+
+          <div class="slider-row" style="margin-top:16px;">
+            <div class="slider-header">
+              <span>Độ sáng màn hình LCD (Brightness):</span>
+              <span class="slider-val" id="valBri">100%</span>
+            </div>
+            <input type="range" id="sliderBri" min="10" max="100" value="100" oninput="onBriChange(this.value)">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 2: Telemetry & Overlay -->
+      <div id="tab-telemetry" class="tab-pane">
+        
+        <div class="card">
+          <div class="card-title">Giám Sát Phần Cứng Trực Tiếp (Siêu Nhẹ)</div>
+          <div class="gauges-grid">
+            <div class="gauge-box">
+              <span class="gauge-title">CPU USAGE</span>
+              <span class="gauge-value" id="hudCpuVal">0%</span>
+            </div>
+            <div class="gauge-box">
+              <span class="gauge-title">GPU TEMP</span>
+              <span class="gauge-value" id="hudGpuVal">0°C</span>
+            </div>
+            <div class="gauge-box">
+              <span class="gauge-title">RAM USAGE</span>
+              <span class="gauge-value" id="hudRamVal">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Hiển Thị Thông Số Lên Màn Hình (HUD Overlay)</div>
+          
+          <div class="switch-row">
+            <span class="switch-label">Bật lớp phủ thông số CPU / RAM trên ảnh GIF</span>
+            <label class="switch">
+              <input type="checkbox" id="swOverlay" onchange="onOverlayToggle()">
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+
+          <div style="font-size:12px;color:var(--text-muted);margin:14px 0 6px;">Vị trí hiển thị (Position):</div>
+          <div class="segmented" id="overlayPosGroup">
+            <button class="seg-item active" onclick="setOverlayPos('bottom')">Dưới cùng</button>
+            <button class="seg-item" onclick="setOverlayPos('center')">Ở giữa</button>
+            <button class="seg-item" onclick="setOverlayPos('top')">Trên cùng</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 3: System & Optimization -->
+      <div id="tab-system" class="tab-pane">
+        
+        <div class="card">
+          <div class="card-title">Dọn Dẹp Tiến Trình TRCC Cũ</div>
+          <div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:14px;" id="trccStatusText">
+            Kiểm tra trạng thái tiến trình TRCC gốc...
+          </div>
+          <button class="btn btn-danger" style="width:100%" onclick="killTrcc()">🛑 Dừng Toàn Bộ TRCC & HWINFO (Giải Phóng RAM & CPU)</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Cài Đặt Khởi Động & Chạy Ngầm</div>
+          
+          <div class="switch-row">
+            <span class="switch-label">Khởi động ứng dụng cùng Windows (Chạy ngầm ở khay)</span>
+            <label class="switch">
+              <input type="checkbox" id="swAutostart" onchange="onAutostartToggle()">
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="toast">Thông báo</div>
+
+  <script>
+    let appState = {
+      rotation: 0,
+      fit_mode: 'fill',
+      fps: 20,
+      brightness: 100,
+      overlay_enabled: false,
+      overlay_position: 'bottom'
+    };
+
+    // Tab Navigation
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    // Toast Message
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // Fetch live status
+    async function updateStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        
+        // Status Badge
+        const connBadge = document.getElementById('connStatus');
+        const connText = document.getElementById('connText');
+        if (data.connected) {
+          connBadge.style.color = 'var(--accent-emerald)';
+          connBadge.style.borderColor = 'rgba(0, 255, 157, 0.25)';
+          connText.innerText = 'ĐÃ KẾT NỐI (0416:5302)';
+        } else {
+          connBadge.style.color = 'var(--accent-crimson)';
+          connBadge.style.borderColor = 'rgba(255, 0, 85, 0.3)';
+          connText.innerText = 'CHƯA TÌM THẤY AIO';
+        }
+
+        // Live Telemetry
+        if (data.stats) {
+          document.getElementById('hudCpuVal').innerText = Math.round(data.stats.cpu_usage) + '%';
+          document.getElementById('hudRamVal').innerText = Math.round(data.stats.ram_usage) + '%';
+          document.getElementById('hudGpuVal').innerText = Math.round(data.stats.gpu_temp) + '°C';
+        }
+
+        // TRCC Status
+        const trccText = document.getElementById('trccStatusText');
+        if (data.trcc_running) {
+          trccText.innerHTML = '<span style="color:#FF1744;font-weight:700;">⚠️ TRCC đang chạy ngầm</span> chiếm 150MB+ RAM và nhiều luồng CPU. Bấm nút dưới để giải phóng.';
+        } else {
+          trccText.innerHTML = '<span style="color:#00E676;font-weight:700;">✅ Tối ưu hoàn hảo:</span> TRCC đã tắt, máy tính của bạn đang chạy ở trạng thái nhẹ nhất.';
+        }
+
+        // Presets list rendering
+        renderPresets(data.presets);
+
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderPresets(presets) {
+      const container = document.getElementById('presetList');
+      if (container.children.length > 0 || !presets) return;
+
+      presets.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'preset-card';
+        card.onclick = () => selectPreset(p.id);
+        card.innerHTML = `
+          <img class="preset-thumb" src="/${p.file}" alt="${p.name}">
+          <div class="preset-name">${p.name}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Live preview refresh loop
+    function refreshPreview() {
+      const img = document.getElementById('livePreview');
+      img.src = '/api/preview?t=' + Date.now();
+    }
+    setInterval(refreshPreview, 100);
+    setInterval(updateStatus, 1500);
+    updateStatus();
+
+    // Controls
+    async function setRotation(deg) {
+      appState.rotation = deg;
+      document.querySelectorAll('#rotGroup .seg-item').forEach((b, i) => {
+        b.classList.toggle('active', [0, 90, 180, 270][i] === deg);
+      });
+      document.getElementById('hudRot').innerText = deg + '°';
+      document.getElementById('screenBox').style.transform = `rotate(${deg}deg)`;
+      await fetch('/api/set_rotation', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({rotation: deg})
+      });
+      showToast(`Đã xoay ${deg}°`);
+    }
+
+    function quickRotate() {
+      const next = (appState.rotation + 90) % 360;
+      setRotation(next);
+    }
+
+    async function setFit(mode) {
+      appState.fit_mode = mode;
+      document.querySelectorAll('#fitGroup .seg-item').forEach(b => {
+        b.classList.toggle('active', b.innerText.toLowerCase().includes(mode));
+      });
+      await fetch('/api/set_fit_mode', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({fit_mode: mode})
+      });
+      showToast(`Chế độ vừa: ${mode}`);
+    }
+
+    let fpsDebounce = null;
+    function onFpsChange(val) {
+      document.getElementById('valFps').innerText = val + ' FPS';
+      document.getElementById('hudFps').innerText = val + ' FPS';
+      clearTimeout(fpsDebounce);
+      fpsDebounce = setTimeout(async () => {
+        await fetch('/api/set_fps', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({fps: parseInt(val)})
+        });
+      }, 200);
+    }
+
+    let briDebounce = null;
+    function onBriChange(val) {
+      document.getElementById('valBri').innerText = val + '%';
+      document.getElementById('screenBox').style.filter = `brightness(${val}%)`;
+      clearTimeout(briDebounce);
+      briDebounce = setTimeout(async () => {
+        await fetch('/api/set_brightness', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({brightness: parseInt(val)})
+        });
+      }, 200);
+    }
+
+    async function onOverlayToggle() {
+      const en = document.getElementById('swOverlay').checked;
+      await fetch('/api/set_overlay', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({enabled: en, position: appState.overlay_position})
+      });
+      showToast(en ? "Đã bật hiển thị HUD" : "Đã tắt hiển thị HUD");
+    }
+
+    async function setOverlayPos(pos) {
+      appState.overlay_position = pos;
+      document.querySelectorAll('#overlayPosGroup .seg-item').forEach(b => {
+        b.classList.toggle('active', b.innerText.toLowerCase().includes(pos === 'bottom' ? 'dưới' : (pos === 'top' ? 'trên' : 'giữa')));
+      });
+      const en = document.getElementById('swOverlay').checked;
+      await fetch('/api/set_overlay', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({enabled: en, position: pos})
+      });
+    }
+
+    async function selectPreset(id) {
+      showToast("Đang nạp ảnh mẫu...");
+      const res = await fetch('/api/select_preset', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({id})
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        showToast("Đã áp dụng ảnh mẫu!");
+      }
+    }
+
+    async function browseFile() {
+      showToast("Đang mở trình chọn tệp...");
+      const res = await fetch('/api/browse_file', {method: 'POST'});
+      const data = await res.json();
+      if (data.status === 'ok') {
+        showToast(`Đã tải: ${data.filename}`);
+      }
+    }
+
+    async function killTrcc() {
+      const res = await fetch('/api/kill_trcc', {method: 'POST'});
+      const data = await res.json();
+      showToast(`Đã đóng ${data.killed_count} tiến trình TRCC!`);
+      updateStatus();
+    }
+
+    async function onAutostartToggle() {
+      const en = document.getElementById('swAutostart').checked;
+      await fetch('/api/set_autostart', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({enabled: en})
+      });
+      showToast(en ? "Đã bật tự khởi động" : "Đã tắt tự khởi động");
+    }
+
+    // Drag and Drop Handling
+    const dropArea = document.getElementById('screenBox');
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, e => e.preventDefault(), false);
+    });
+
+    dropArea.addEventListener('drop', async e => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0) {
+        const file = files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        showToast("Đang tải lên " + file.name + "...");
+        const res = await fetch('/api/upload_file', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          showToast("Đã áp dụng: " + data.filename);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
