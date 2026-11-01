@@ -29,6 +29,8 @@ Thumbs.db
 
 # Go
 *.exe
+*.exe~
+*~
 *.syso
 ThermalrightWarframeGo.exe
 build_release/

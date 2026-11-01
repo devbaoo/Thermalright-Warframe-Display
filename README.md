@@ -67,6 +67,13 @@
 - **Chỉnh hướng xoay**: Bấm các nút **0°, 90°, 180°, 270°** sao cho hình ảnh hiển thị đúng chiều bạn gắn tản nhiệt trên case máy tính.
 - **Bật thông số CPU/GPU**: Gạt công tắc **"Hiển thị thông số (Overlay)"** để xem nhiệt độ và mức tải thời gian thực.
 
+> [!TIP]
+> **💡 Lưu ý quan trọng về Cửa sổ Giao diện (Control Panel):**
+> - Cửa sổ giao diện chỉ là bảng điều khiển tạm thời khi bạn cần đổi ảnh GIF hoặc chỉnh góc xoay / thông số.
+> - **Sau khi cài đặt xong, bạn có thể bấm nút `[X]` đóng cửa sổ bất cứ lúc nào!** Màn hình tản nhiệt AIO trên máy bạn **vẫn tiếp tục hiển thị mượt mà 24/7** thông qua tiến trình chạy ngầm `ThermalrightWarframe.exe` với mức tiêu thụ siêu nhẹ: **chỉ ~9.4 MB RAM và < 0.1% CPU**.
+> - Khi mở cửa sổ, Windows sẽ gom cửa sổ này vào nhóm "Microsoft Edge" (chỉ chiếm ~30MB của riêng tab, con số hàng trăm MB trên Task Manager là toàn bộ trình duyệt cá nhân của máy). Khi bạn đóng cửa sổ, tab này tắt hoàn toàn (về 0 MB RAM, 0% CPU).
+> - Khi bật **"Tự khởi động cùng Windows" (Autostart)**, máy tính khởi động ngầm hoàn toàn với cờ `--minimized` và **không hề mở bất kỳ cửa sổ nào**.
+
 ### 3. Tắt ứng dụng gốc TRCC
 Nếu trên máy bạn vẫn còn cài TRCC:
 - Chuyển sang tab **"⚡ Tối Ưu & Hệ Thống"**.
@@ -100,6 +107,12 @@ go build -ldflags="-H=windowsgui -s -w" -o ThermalrightWarframe.exe main.go
 - **Supported Formats**: Animated GIF, PNG, JPG, WebP, BMP.
 - **Orientation Control**: 4-way rotation (0°, 90°, 180°, 270°) with Fill/Fit/Stretch aspect ratios.
 - **Telemetry Overlay**: Frosted-glass CPU, GPU Temperature, and RAM badges.
+
+> [!TIP]
+> **💡 Important note about the Control Panel window:**
+> - The UI window is only a control panel for configuring GIFs, orientation, and overlay options.
+> - **You can safely close the window (`[X]`) once configured!** The AIO LCD screen continues streaming 24/7 in the background via `ThermalrightWarframe.exe` using only **~9.4 MB RAM and < 0.1% CPU**.
+> - When auto-start on boot is enabled, the app launches silently in the background (`--minimized`) without opening any window.
 
 ---
 
