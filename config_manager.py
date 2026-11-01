@@ -3,12 +3,18 @@ Configuration Manager & TRCC Process Controller for Warframe Display.
 """
 
 import os
+import sys
 import json
 import subprocess
 import winreg
 from typing import Dict, Any
 
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+if getattr(sys, 'frozen', False):
+    CONFIG_DIR = os.path.dirname(sys.executable)
+else:
+    CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
+
+CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 RUN_REG_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 APP_NAME = "WarframeAIO_Display"
 
