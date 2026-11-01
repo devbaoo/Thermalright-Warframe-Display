@@ -13,12 +13,13 @@ from bottle import Bottle, request, response, static_file
 from PIL import Image
 
 class WebUIServer:
-    def __init__(self, driver, processor, monitor, config, port=28765):
+    def __init__(self, driver, processor, monitor, config, port=28765, on_open_window=None):
         self.driver = driver
         self.processor = processor
         self.monitor = monitor
         self.config = config
         self.port = port
+        self.on_open_window = on_open_window
         self.app = Bottle()
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
         self.web_dir = os.path.join(self.base_dir, "web")
@@ -48,6 +49,12 @@ class WebUIServer:
         @app.route("/assets/<filepath:path>")
         def serve_assets(filepath):
             return static_file(filepath, root=self.assets_dir)
+
+        @app.route("/api/open_window", method=["GET", "POST"])
+        def open_window_endpoint():
+            if self.on_open_window:
+                threading.Thread(target=self.on_open_window, daemon=True).start()
+            return {"status": "ok"}
 
         @app.route("/api/status")
         def get_status():
@@ -212,3 +219,4 @@ class WebUIServer:
         t = threading.Thread(target=lambda: self.app.run(host="127.0.0.1", port=self.port, quiet=True), daemon=True)
         t.start()
         return t
+

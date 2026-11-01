@@ -9,6 +9,13 @@ __pycache__/
 venv/
 env/
 
+# Logs
+*.log
+app.log
+
+# Temporary Profiles
+edge_profile/
+
 # OS / Editor
 .vscode/
 .idea/
