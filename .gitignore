@@ -26,3 +26,8 @@ dist/
 .idea/
 Thumbs.db
 
+
+# Go
+*.exe
+*.syso
+ThermalrightWarframeGo.exe

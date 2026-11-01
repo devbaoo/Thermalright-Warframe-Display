@@ -30,8 +30,10 @@ def build_shortcuts():
         except Exception as e:
             print(f"Icon generation note: {e}")
 
+    go_exe = os.path.join(script_dir, "ThermalrightWarframe.exe")
     dist_exe = os.path.join(script_dir, "dist", "ThermalrightWarframe", "ThermalrightWarframe.exe")
-    use_compiled_exe = os.path.exists(dist_exe)
+    use_compiled_exe = os.path.exists(go_exe) or os.path.exists(dist_exe)
+    target_exe = go_exe if os.path.exists(go_exe) else dist_exe
 
     # Find pythonw.exe fallback
     python_dir = os.path.dirname(sys.executable)
@@ -51,10 +53,10 @@ def build_shortcuts():
             vbs_content = (
                 'Set WshShell = CreateObject("WScript.Shell")\n'
                 f'Set Shortcut = WshShell.CreateShortcut("{shortcut_path}")\n'
-                f'Shortcut.TargetPath = "{dist_exe}"\n'
+                f'Shortcut.TargetPath = "{target_exe}"\n'
                 'Shortcut.Arguments = ""\n'
-                f'Shortcut.WorkingDirectory = "{os.path.dirname(dist_exe)}"\n'
-                'Shortcut.Description = "Thermalright Warframe AIO Display Controller"\n'
+                f'Shortcut.WorkingDirectory = "{os.path.dirname(target_exe)}"\n'
+                'Shortcut.Description = "Thermalright Warframe AIO Display Controller (Native Go)"\n'
             )
             if os.path.exists(icon_ico):
                 vbs_content += f'Shortcut.IconLocation = "{icon_ico},0"\n'
