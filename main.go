@@ -51,11 +51,10 @@ func main() {
 	if ui.IsServerAlive(Port) {
 		log.Println("[App] Found existing Warframe Display instance already active.")
 		if !*minimized {
-			woken := ui.RequestOpenWindow(Port)
-			if !woken {
+			if !ui.BringWindowToFront() {
 				_, _ = ui.LaunchAppWindow(Port)
 			}
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(600 * time.Millisecond)
 		}
 		os.Exit(0)
 	}

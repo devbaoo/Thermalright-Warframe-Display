@@ -25,8 +25,10 @@ var (
 	procEnumWindows          = modUser32.NewProc("EnumWindows")
 	procGetWindowTextW       = modUser32.NewProc("GetWindowTextW")
 	procGetWindowTextLengthW = modUser32.NewProc("GetWindowTextLengthW")
-	procSendMessageW         = modUser32.NewProc("SendMessageW")
+	procPostMessageW         = modUser32.NewProc("PostMessageW")
 	procLoadImageW           = modUser32.NewProc("LoadImageW")
+	procSetForegroundWindow  = modUser32.NewProc("SetForegroundWindow")
+	procShowWindow           = modUser32.NewProc("ShowWindow")
 )
 
 const (
@@ -36,6 +38,7 @@ const (
 	IMAGE_ICON      = 1
 	LR_LOADFROMFILE = 0x00000010
 	LR_DEFAULTSIZE  = 0x00000040
+	SW_RESTORE      = 9
 )
 
 func IsServerAlive(port int) bool {
@@ -74,6 +77,27 @@ func WaitForServer(port int, maxWait time.Duration) bool {
 	return false
 }
 
+func BringWindowToFront() bool {
+	found := false
+	cb := syscall.NewCallback(func(hwnd uintptr, lparam uintptr) uintptr {
+		lenText, _, _ := procGetWindowTextLengthW.Call(hwnd)
+		if lenText > 0 {
+			buf := make([]uint16, lenText+1)
+			procGetWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(&buf[0])), lenText+1)
+			title := syscall.UTF16ToString(buf)
+			if strings.Contains(title, "Thermalright") || strings.Contains(title, "Warframe") {
+				procShowWindow.Call(hwnd, uintptr(SW_RESTORE))
+				procSetForegroundWindow.Call(hwnd)
+				found = true
+				return 0 // Stop enumeration
+			}
+		}
+		return 1 // Continue enumeration
+	})
+	procEnumWindows.Call(cb, 0)
+	return found
+}
+
 func applyWindowIcon(iconPath string) {
 	if !fileExists(iconPath) {
 		return
@@ -102,21 +126,25 @@ func applyWindowIcon(iconPath string) {
 			procGetWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(&buf[0])), lenText+1)
 			title := syscall.UTF16ToString(buf)
 			if strings.Contains(title, "Thermalright") || strings.Contains(title, "Warframe") {
-				procSendMessageW.Call(hwnd, uintptr(WM_SETICON), uintptr(ICON_BIG), hIcon)
-				procSendMessageW.Call(hwnd, uintptr(WM_SETICON), uintptr(ICON_SMALL), hIcon)
+				procPostMessageW.Call(hwnd, uintptr(WM_SETICON), uintptr(ICON_BIG), hIcon)
+				procPostMessageW.Call(hwnd, uintptr(WM_SETICON), uintptr(ICON_SMALL), hIcon)
 			}
 		}
-		return 1 // continue enumeration
+		return 1
 	})
 
-	// Poll periodically as Edge creates its top-level window
-	for i := 0; i < 20; i++ {
-		time.Sleep(150 * time.Millisecond)
+	for i := 0; i < 15; i++ {
+		time.Sleep(200 * time.Millisecond)
 		procEnumWindows.Call(cb, 0)
 	}
 }
 
 func LaunchAppWindow(port int) (*exec.Cmd, error) {
+	// 1. If an existing window is open/minimized, restore and bring it to front
+	if BringWindowToFront() {
+		return nil, nil
+	}
+
 	url := fmt.Sprintf("http://127.0.0.1:%d", port)
 	var browserExe string
 	for _, p := range browserPaths {
@@ -140,8 +168,9 @@ func LaunchAppWindow(port int) (*exec.Cmd, error) {
 			fmt.Sprintf("--app=%s", url),
 			fmt.Sprintf("--user-data-dir=%s", profileDir),
 			"--window-size=1100,740",
+			"--no-first-run",
+			"--no-default-browser-check",
 			"--disable-features=TranslateUI",
-			"--app-id=ThermalrightWarframeDisplay",
 		)
 		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: false}
 		err := cmd.Start()
