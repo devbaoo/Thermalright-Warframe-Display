@@ -43,7 +43,7 @@ const (
 
 func IsServerAlive(port int) bool {
 	url := fmt.Sprintf("http://127.0.0.1:%d/api/status", port)
-	client := http.Client{Timeout: 600 * time.Millisecond}
+	client := http.Client{Timeout: 500 * time.Millisecond}
 	resp, err := client.Get(url)
 	if err != nil {
 		return false
@@ -54,7 +54,7 @@ func IsServerAlive(port int) bool {
 
 func RequestOpenWindow(port int) bool {
 	url := fmt.Sprintf("http://127.0.0.1:%d/api/open_window", port)
-	client := http.Client{Timeout: 1000 * time.Millisecond}
+	client := http.Client{Timeout: 800 * time.Millisecond}
 	resp, err := client.Post(url, "application/json", nil)
 	if err != nil {
 		return false
@@ -89,10 +89,10 @@ func BringWindowToFront() bool {
 				procShowWindow.Call(hwnd, uintptr(SW_RESTORE))
 				procSetForegroundWindow.Call(hwnd)
 				found = true
-				return 0 // Stop enumeration
+				return 0
 			}
 		}
-		return 1 // Continue enumeration
+		return 1
 	})
 	procEnumWindows.Call(cb, 0)
 	return found
@@ -140,11 +140,6 @@ func applyWindowIcon(iconPath string) {
 }
 
 func LaunchAppWindow(port int) (*exec.Cmd, error) {
-	// 1. If an existing window is open/minimized, restore and bring it to front
-	if BringWindowToFront() {
-		return nil, nil
-	}
-
 	url := fmt.Sprintf("http://127.0.0.1:%d", port)
 	var browserExe string
 	for _, p := range browserPaths {
@@ -162,11 +157,9 @@ func LaunchAppWindow(port int) (*exec.Cmd, error) {
 	iconPath := filepath.Join(baseDir, "assets", "app_icon.ico")
 
 	if browserExe != "" {
-		profileDir := filepath.Join(os.TempDir(), "WarframeDisplay_NativeApp")
 		cmd := exec.Command(
 			browserExe,
 			fmt.Sprintf("--app=%s", url),
-			fmt.Sprintf("--user-data-dir=%s", profileDir),
 			"--window-size=1100,740",
 			"--no-first-run",
 			"--no-default-browser-check",
