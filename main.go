@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"flag"
+	"fmt"
 	"image"
 	"io/fs"
 	"log"
@@ -32,6 +33,12 @@ const (
 func main() {
 	minimized := flag.Bool("minimized", false, "Start minimized to background")
 	flag.Parse()
+
+	logFile, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err == nil {
+		log.SetOutput(logFile)
+		defer logFile.Close()
+	}
 
 	// 1. Single Instance Check
 	if ui.IsServerAlive(Port) {
@@ -143,6 +150,8 @@ func runDisplayLoop(
 	frameIdx := 0
 	lastWebPreview := time.Now()
 	lastReconnectAttempt := time.Now()
+	lastStaticSend := time.Time{}
+	lastConfigKey := ""
 
 	for {
 		select {
@@ -156,13 +165,19 @@ func runDisplayLoop(
 			}
 
 			cfg := cfgMgr.Get()
+			frame := processor.GetFrame(frameIdx)
+			if frame == nil {
+				time.Sleep(50 * time.Millisecond)
+				continue
+			}
+
+			durMS := frame.DurationMS
 			var rgb565 []byte
 			var previewImg image.Image
-			durMS := 50
 
 			if cfg.OverlayEnabled {
 				stats := mon.GetStats()
-				pImg, b := processor.RenderOverlayFrame(
+				previewImg, rgb565 = processor.RenderOverlayFrame(
 					frameIdx,
 					stats.CPUUsage,
 					stats.GPUTemp,
@@ -170,25 +185,44 @@ func runDisplayLoop(
 					cfg.OverlayPosition,
 					cfg.OverlayStyle,
 				)
-				previewImg = pImg
-				rgb565 = b
 			} else {
-				frame := processor.GetFrame(frameIdx)
-				if frame != nil {
-					previewImg = frame.PreviewImage
-					rgb565 = frame.RGB565Bytes
-					durMS = frame.DurationMS
+				previewImg = frame.PreviewImage
+				rgb565 = frame.RGB565Bytes
+			}
+
+			// Configuration signature to detect changes
+			configKey := fmt.Sprintf("%s_%d_%s_%.2f_%t_%s_%s",
+				cfg.LastFile, cfg.Rotation, cfg.FitMode, cfg.Brightness,
+				cfg.OverlayEnabled, cfg.OverlayPosition, cfg.OverlayStyle,
+			)
+
+			// 1. Send to hardware LCD over USB with static image optimization
+			shouldSend := true
+			if totalFrames == 1 {
+				if configKey != lastConfigKey {
+					shouldSend = true
+					lastConfigKey = configKey
+				} else if cfg.OverlayEnabled {
+					if time.Since(lastStaticSend) >= 500*time.Millisecond {
+						shouldSend = true
+					} else {
+						shouldSend = false
+					}
+				} else {
+					shouldSend = lastStaticSend.IsZero()
 				}
 			}
 
-			// 1. Send to hardware LCD over USB
-			if !driver.IsConnected() {
-				if time.Since(lastReconnectAttempt) > 2*time.Second {
-					lastReconnectAttempt = time.Now()
-					driver.Connect()
+			if shouldSend && len(rgb565) == usb.PayloadSize {
+				if !driver.IsConnected() {
+					if time.Since(lastReconnectAttempt) > 2*time.Second {
+						lastReconnectAttempt = time.Now()
+						driver.Connect()
+					}
+				} else {
+					driver.SendFrame(rgb565)
+					lastStaticSend = time.Now()
 				}
-			} else if len(rgb565) == usb.PayloadSize {
-				driver.SendFrame(rgb565)
 			}
 
 			// 2. Update web preview at ~10 FPS
@@ -200,13 +234,19 @@ func runDisplayLoop(
 			}
 
 			// 3. Advance frame index
-			if totalFrames > 0 {
+			if totalFrames > 1 {
 				frameIdx = (frameIdx + 1) % totalFrames
 			}
 
 			// 4. Sleep frame duration
 			sleepDur := time.Duration(durMS) * time.Millisecond
-			if sleepDur < 15*time.Millisecond {
+			if totalFrames == 1 {
+				if cfg.OverlayEnabled {
+					sleepDur = 100 * time.Millisecond
+				} else {
+					sleepDur = 250 * time.Millisecond
+				}
+			} else if sleepDur < 15*time.Millisecond {
 				sleepDur = 15 * time.Millisecond
 			}
 			time.Sleep(sleepDur)

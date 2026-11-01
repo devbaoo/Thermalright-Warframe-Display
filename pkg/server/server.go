@@ -23,16 +23,16 @@ import (
 )
 
 type Server struct {
-	driver        *usb.Driver
-	processor     *display.Processor
-	monitor       *monitor.Monitor
-	cfgMgr        *config.Manager
-	port          int
-	webFS         fs.FS
-	assetsFS      fs.FS
-	onOpenWindow  func()
+	driver         *usb.Driver
+	processor      *display.Processor
+	monitor        *monitor.Monitor
+	cfgMgr         *config.Manager
+	port           int
+	webFS          fs.FS
+	assetsFS       fs.FS
+	onOpenWindow   func()
 
-	mu            sync.RWMutex
+	mu             sync.RWMutex
 	currentPreview []byte
 }
 
@@ -77,17 +77,29 @@ func (s *Server) Start() error {
 	// Static web assets
 	mux.Handle("/", http.FileServer(http.FS(s.webFS)))
 
-	// API Endpoints
+	// API Endpoints - Compatible with both old & new frontend routes
 	mux.HandleFunc("/api/status", s.handleStatus)
+	mux.HandleFunc("/api/preview", s.handlePreview)
 	mux.HandleFunc("/api/preview.jpg", s.handlePreview)
+
 	mux.HandleFunc("/api/set_rotation", s.handleSetRotation)
 	mux.HandleFunc("/api/set_fit", s.handleSetFit)
+	mux.HandleFunc("/api/set_fit_mode", s.handleSetFit)
+
 	mux.HandleFunc("/api/set_brightness", s.handleSetBrightness)
 	mux.HandleFunc("/api/set_fps", s.handleSetFPS)
+
 	mux.HandleFunc("/api/set_mount", s.handleSetMount)
+	mux.HandleFunc("/api/set_mount_mode", s.handleSetMount)
+
 	mux.HandleFunc("/api/set_overlay", s.handleSetOverlay)
+
 	mux.HandleFunc("/api/load_preset", s.handleLoadPreset)
+	mux.HandleFunc("/api/select_preset", s.handleLoadPreset)
+
 	mux.HandleFunc("/api/select_file", s.handleSelectFile)
+	mux.HandleFunc("/api/browse_file", s.handleSelectFile)
+
 	mux.HandleFunc("/api/upload_file", s.handleUploadFile)
 	mux.HandleFunc("/api/kill_trcc", s.handleKillTRCC)
 	mux.HandleFunc("/api/set_autostart", s.handleSetAutostart)
@@ -123,10 +135,12 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		"device_name":      "Thermalright Frozen Warframe 360 SE",
 		"device_id":        "0416:5302",
 		"file_name":        fileName,
+		"total_frames":     s.processor.FrameCount(),
 		"rotation":         cfg.Rotation,
 		"fit_mode":         cfg.FitMode,
-		"brightness":       cfg.Brightness,
+		"fps":              cfg.FPSOverride,
 		"fps_override":     cfg.FPSOverride,
+		"brightness":       int(cfg.Brightness * 100),
 		"mount_mode":       cfg.MountMode,
 		"overlay_enabled":  cfg.OverlayEnabled,
 		"overlay_position": cfg.OverlayPosition,
@@ -134,6 +148,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		"minimize_to_tray": cfg.MinimizeToTray,
 		"autostart":        cfg.Autostart,
 		"trcc_running":     config.IsTRCCRunning(),
+		"stats":            stats,
 		"cpu_usage":        stats.CPUUsage,
 		"ram_usage":        stats.RAMUsage,
 		"gpu_temp":         stats.GPUTemp,
@@ -169,7 +184,7 @@ func (s *Server) handleSetRotation(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": "ok", "rotation": req.Rotation})
 }
 
 func (s *Server) handleSetFit(w http.ResponseWriter, r *http.Request) {
@@ -183,7 +198,7 @@ func (s *Server) handleSetFit(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": "ok", "fit_mode": req.FitMode})
 }
 
 func (s *Server) handleSetBrightness(w http.ResponseWriter, r *http.Request) {
@@ -191,10 +206,23 @@ func (s *Server) handleSetBrightness(w http.ResponseWriter, r *http.Request) {
 		Brightness float64 `json:"brightness"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err == nil {
-		s.processor.SetBrightness(req.Brightness)
+		bri := req.Brightness
+		if bri > 1.0 {
+			bri = bri / 100.0
+		}
+		if bri < 0.1 {
+			bri = 0.1
+		}
+		if bri > 1.0 {
+			bri = 1.0
+		}
+		s.processor.SetBrightness(bri)
 		s.cfgMgr.Update(func(c *config.Config) {
-			c.Brightness = req.Brightness
+			c.Brightness = bri
 		})
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": "ok", "brightness": int(bri * 100)})
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
@@ -211,7 +239,7 @@ func (s *Server) handleSetFPS(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": "ok", "fps": req.FPS})
 }
 
 func (s *Server) handleSetMount(w http.ResponseWriter, r *http.Request) {
@@ -225,7 +253,7 @@ func (s *Server) handleSetMount(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": "ok", "mount_mode": req.MountMode})
 }
 
 func (s *Server) handleSetOverlay(w http.ResponseWriter, r *http.Request) {
@@ -246,14 +274,25 @@ func (s *Server) handleSetOverlay(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":   "ok",
+		"enabled":  req.Enabled,
+		"position": req.Position,
+		"style":    req.Style,
+	})
 }
 
 func (s *Server) handleLoadPreset(w http.ResponseWriter, r *http.Request) {
 	var req struct {
+		ID       string `json:"id"`
 		PresetID string `json:"preset_id"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&req)
+
+	targetID := req.ID
+	if targetID == "" {
+		targetID = req.PresetID
+	}
 
 	presetFiles := map[string]string{
 		"sample_core":     "assets/sample_core.gif",
@@ -262,7 +301,7 @@ func (s *Server) handleLoadPreset(w http.ResponseWriter, r *http.Request) {
 		"radar_telemetry": "assets/presets/radar_telemetry.gif",
 	}
 
-	target, exists := presetFiles[req.PresetID]
+	target, exists := presetFiles[targetID]
 	if !exists {
 		target = "assets/sample_core.gif"
 	}
@@ -373,33 +412,33 @@ var (
 )
 
 type openFileNameW struct {
-	StructSize      uint32
-	HwndOwner       uintptr
-	HInstance       uintptr
-	Filter          *uint16
-	CustomFilter    *uint16
-	MaxCustFilter   uint32
-	FilterIndex     uint32
-	File            *uint16
-	MaxFile         uint32
-	FileTitle       *uint16
-	MaxFileTitle    uint32
-	InitialDir      *uint16
-	Title           *uint16
-	Flags           uint32
-	FileOffset      uint16
-	FileExtension   uint16
-	DefExt          *uint16
-	CustData        uintptr
-	FnHook          uintptr
-	TemplateName    *uint16
-	PvReserved      uintptr
-	DwReserved      uint32
-	FlagsEx         uint32
+	StructSize    uint32
+	HwndOwner     uintptr
+	HInstance     uintptr
+	Filter        *uint16
+	CustomFilter  *uint16
+	MaxCustFilter uint32
+	FilterIndex   uint32
+	File          *uint16
+	MaxFile       uint32
+	FileTitle     *uint16
+	MaxFileTitle  uint32
+	InitialDir    *uint16
+	Title         *uint16
+	Flags         uint32
+	FileOffset    uint16
+	FileExtension uint16
+	DefExt        *uint16
+	CustData      uintptr
+	FnHook        uintptr
+	TemplateName  *uint16
+	PvReserved    uintptr
+	DwReserved    uint32
+	FlagsEx       uint32
 }
 
 func openWindowsFileDialog() string {
-	filter, _ := syscall.UTF16PtrFromString("Media Files (*.gif;*.png;*.jpg;*.jpeg)\x00*.gif;*.png;*.jpg;*.jpeg\x00All Files (*.*)\x00*.*\x00\x00")
+	filter, _ := syscall.UTF16PtrFromString("Media Files (*.gif;*.png;*.jpg;*.jpeg;*.webp)\x00*.gif;*.png;*.jpg;*.jpeg;*.webp\x00All Files (*.*)\x00*.*\x00\x00")
 	title, _ := syscall.UTF16PtrFromString("Select Image / GIF for Warframe LCD")
 
 	fileBuf := make([]uint16, 1024)

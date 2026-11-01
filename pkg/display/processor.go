@@ -20,11 +20,11 @@ import (
 )
 
 const (
-	PanelW          = 240
-	PanelH          = 320
-	PayloadSize     = PanelW * PanelH * 2
-	FontValPath     = `C:\Windows\Fonts\bahnschrift.ttf`
-	FontLblPath     = `C:\Windows\Fonts\segoeuib.ttf`
+	PanelW      = 240
+	PanelH      = 320
+	PayloadSize = PanelW * PanelH * 2
+	FontValPath = `C:\Windows\Fonts\bahnschrift.ttf`
+	FontLblPath = `C:\Windows\Fonts\segoeuib.ttf`
 )
 
 type ProcessedFrame struct {
@@ -35,21 +35,21 @@ type ProcessedFrame struct {
 }
 
 type Processor struct {
-	mu             sync.RWMutex
-	currentPath    string
-	origFrames     []*image.RGBA
-	origDurations  []int
-	isAnimated     bool
+	mu            sync.RWMutex
+	currentPath   string
+	origFrames    []*image.RGBA
+	origDurations []int
+	isAnimated    bool
 
-	mountMode      string // "landscape" (320x240) or "portrait" (240x320)
-	rotation       int    // 0, 90, 180, 270
-	fitMode        string // "fill", "fit", "stretch"
-	brightness     float64
-	fpsOverride    int
+	mountMode   string // "landscape" (320x240) or "portrait" (240x320)
+	rotation    int    // 0, 90, 180, 270
+	fitMode     string // "fill", "fit", "stretch"
+	brightness  float64
+	fpsOverride int
 
-	frames         []ProcessedFrame
-	fontVal        font.Face
-	fontLbl        font.Face
+	frames  []ProcessedFrame
+	fontVal font.Face
+	fontLbl font.Face
 }
 
 func NewProcessor() *Processor {
@@ -121,14 +121,26 @@ func (p *Processor) LoadFile(filePath string, rot int, fit string, bri float64, 
 		}
 
 		canvas := image.NewRGBA(image.Rect(0, 0, w, h))
-		// Fill with black initially
+		// Fill with solid black initially
 		draw.Draw(canvas, canvas.Bounds(), &image.Uniform{color.Black}, image.Point{}, draw.Src)
 
+		var prevCanvas *image.RGBA
+
 		for i, frame := range gifData.Image {
-			// Composite frame
+			disposal := byte(0)
+			if i < len(gifData.Disposal) {
+				disposal = gifData.Disposal[i]
+			}
+
+			if disposal == gif.DisposalPrevious {
+				prevCanvas = image.NewRGBA(canvas.Bounds())
+				copy(prevCanvas.Pix, canvas.Pix)
+			}
+
+			// Composite sub-frame onto canvas
 			draw.Draw(canvas, frame.Bounds(), frame, frame.Bounds().Min, draw.Over)
 
-			// Clone canvas
+			// Clone composite canvas for this frame
 			frameClone := image.NewRGBA(canvas.Bounds())
 			copy(frameClone.Pix, canvas.Pix)
 			origs = append(origs, frameClone)
@@ -141,9 +153,19 @@ func (p *Processor) LoadFile(filePath string, rot int, fit string, bri float64, 
 				}
 			}
 			durs = append(durs, durMs)
+
+			// Handle disposal for subsequent frame
+			switch disposal {
+			case gif.DisposalBackground:
+				draw.Draw(canvas, frame.Bounds(), &image.Uniform{color.Black}, image.Point{}, draw.Src)
+			case gif.DisposalPrevious:
+				if prevCanvas != nil {
+					copy(canvas.Pix, prevCanvas.Pix)
+				}
+			}
 		}
 	} else {
-		// Static image (PNG, JPG)
+		// Static image (PNG, JPG, WebP)
 		img, _, err := image.Decode(bytes.NewReader(data))
 		if err != nil {
 			return fmt.Errorf("unsupported image format: %w", err)
@@ -495,7 +517,7 @@ func (p *Processor) RenderOverlayFrame(idx int, cpuUsage, gpuTemp, ramUsage floa
 	}
 
 	if style == "strip" {
-		stripH := 30
+		stripH := 28
 		y := h - stripH - 8
 		if pos == "top" {
 			y = 8
@@ -504,16 +526,16 @@ func (p *Processor) RenderOverlayFrame(idx int, cpuUsage, gpuTemp, ramUsage floa
 		}
 		pad := 12
 
-		// Background dark card
-		drawRoundedRect(canvas, pad, y, w-pad, y+stripH, 6, color.RGBA{10, 13, 19, 230}, color.RGBA{38, 48, 64, 255})
+		// Background dark card with soft border
+		drawFastRoundedRect(canvas, pad, y, w-pad, y+stripH, 5, color.RGBA{10, 13, 20, 235}, color.RGBA{42, 52, 72, 255})
 		// Top accent line
-		drawRoundedRect(canvas, pad+2, y, w-pad-2, y+2, 1, color.RGBA{59, 130, 246, 255}, color.RGBA{0, 0, 0, 0})
+		drawFastRoundedRect(canvas, pad+2, y, w-pad-2, y+2, 1, color.RGBA{59, 130, 246, 255}, color.RGBA{0, 0, 0, 0})
 
 		colW := (w - pad*2) / 3
 		for i, item := range items {
-			cx := pad + i*colW + 12
-			p.drawText(canvas, cx, y+16, item.Label, color.RGBA{148, 163, 184, 255}, p.fontLbl)
-			p.drawText(canvas, cx+30, y+19, item.Val, color.RGBA{245, 247, 250, 255}, p.fontVal)
+			cx := pad + i*colW + 10
+			p.drawText(canvas, cx, y+14, item.Label, color.RGBA{148, 163, 184, 255}, p.fontLbl)
+			p.drawText(canvas, cx+28, y+20, item.Val, color.RGBA{245, 247, 250, 255}, p.fontVal)
 		}
 	} else {
 		// Modern Triple Frosted Badges (Default)
@@ -535,14 +557,14 @@ func (p *Processor) RenderOverlayFrame(idx int, cpuUsage, gpuTemp, ramUsage floa
 			bx := startX + i*(badgeW+gap)
 
 			// Drop shadow
-			drawRoundedRect(canvas, bx+1, y+2, bx+badgeW+1, y+badgeH+2, 6, color.RGBA{0, 0, 0, 120}, color.RGBA{0, 0, 0, 0})
+			drawFastRoundedRect(canvas, bx+1, y+2, bx+badgeW+1, y+badgeH+2, 5, color.RGBA{0, 0, 0, 120}, color.RGBA{0, 0, 0, 0})
 			// Frosted Glass card
-			drawRoundedRect(canvas, bx, y, bx+badgeW, y+badgeH, 6, color.RGBA{11, 14, 21, 230}, color.RGBA{42, 52, 70, 255})
+			drawFastRoundedRect(canvas, bx, y, bx+badgeW, y+badgeH, 5, color.RGBA{10, 13, 20, 235}, color.RGBA{42, 52, 72, 255})
 			// Accent indicator bar
-			drawRoundedRect(canvas, bx+6, y+7, bx+9, y+badgeH-7, 2, item.Accent, color.RGBA{0, 0, 0, 0})
+			drawFastRoundedRect(canvas, bx+6, y+7, bx+9, y+badgeH-7, 2, item.Accent, color.RGBA{0, 0, 0, 0})
 			// Label & Value
 			p.drawText(canvas, bx+14, y+13, item.Label, color.RGBA{148, 163, 184, 255}, p.fontLbl)
-			p.drawText(canvas, bx+14, y+25, item.Val, color.RGBA{245, 247, 250, 255}, p.fontVal)
+			p.drawText(canvas, bx+14, y+26, item.Val, color.RGBA{245, 247, 250, 255}, p.fontVal)
 		}
 	}
 
@@ -561,39 +583,48 @@ func (p *Processor) drawText(dst *image.RGBA, x, y int, text string, col color.C
 	d.DrawString(text)
 }
 
-func drawRoundedRect(dst *image.RGBA, x0, y0, x1, y1, radius int, fill, border color.RGBA) {
+func drawFastRoundedRect(dst *image.RGBA, x0, y0, x1, y1, radius int, fill, border color.RGBA) {
+	b := dst.Bounds()
+	if x0 < b.Min.X {
+		x0 = b.Min.X
+	}
+	if y0 < b.Min.Y {
+		y0 = b.Min.Y
+	}
+	if x1 >= b.Max.X {
+		x1 = b.Max.X - 1
+	}
+	if y1 >= b.Max.Y {
+		y1 = b.Max.Y - 1
+	}
+
 	for y := y0; y <= y1; y++ {
 		for x := x0; x <= x1; x++ {
-			// Basic rounded corner bounding
-			isCorner := false
+			// Fast rounded corner check
 			if x < x0+radius && y < y0+radius {
 				dx := x - (x0 + radius)
 				dy := y - (y0 + radius)
 				if dx*dx+dy*dy > radius*radius {
-					isCorner = true
+					continue
 				}
 			} else if x > x1-radius && y < y0+radius {
 				dx := x - (x1 - radius)
 				dy := y - (y0 + radius)
 				if dx*dx+dy*dy > radius*radius {
-					isCorner = true
+					continue
 				}
 			} else if x < x0+radius && y > y1-radius {
 				dx := x - (x0 + radius)
 				dy := y - (y1 - radius)
 				if dx*dx+dy*dy > radius*radius {
-					isCorner = true
+					continue
 				}
 			} else if x > x1-radius && y > y1-radius {
 				dx := x - (x1 - radius)
 				dy := y - (y1 - radius)
 				if dx*dx+dy*dy > radius*radius {
-					isCorner = true
+					continue
 				}
-			}
-
-			if isCorner {
-				continue
 			}
 
 			isBorder := (x == x0 || x == x1 || y == y0 || y == y1) && border.A > 0

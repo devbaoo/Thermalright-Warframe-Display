@@ -144,6 +144,12 @@ func IsTRCCRunning() bool {
 
 func KillTRCCProcesses() int {
 	killed := 0
+	// 1. Terminate scheduled task first
+	schCmd := exec.Command("schtasks", "/End", "/TN", "TRCCAppStartup")
+	schCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	_ = schCmd.Run()
+
+	// 2. Kill any stray processes
 	for _, name := range []string{"trcc.exe", "hwinfo.exe", "usblcd.exe", "usblcdnew.exe"} {
 		cmd := exec.Command("taskkill", "/F", "/IM", name)
 		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -153,3 +159,4 @@ func KillTRCCProcesses() int {
 	}
 	return killed
 }
+

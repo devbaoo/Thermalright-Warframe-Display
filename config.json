@@ -1,9 +1,9 @@
 {
   "last_file": "C:/Users/Admin/Pictures/covietnam.jpg",
-  "rotation": 90,
+  "rotation": 0,
   "mount_mode": "landscape",
   "fit_mode": "fill",
-  "brightness": 1.0,
+  "brightness": 1,
   "fps_override": 20,
   "overlay_enabled": true,
   "overlay_position": "bottom",

@@ -195,7 +195,12 @@ func (m *Monitor) loop() {
 			gpuTemp, gpuUsage := m.queryGPU()
 
 			m.mu.Lock()
-			m.stats.CPUUsage = cpu
+			if m.stats.CPUUsage <= 0 {
+				m.stats.CPUUsage = cpu
+			} else {
+				// Smooth Exponential Moving Average to prevent jumping numbers
+				m.stats.CPUUsage = m.stats.CPUUsage*0.65 + cpu*0.35
+			}
 			m.stats.RAMUsage = ram
 			if gpuTemp > 0 {
 				m.stats.GPUTemp = gpuTemp
@@ -205,3 +210,4 @@ func (m *Monitor) loop() {
 		}
 	}
 }
+
