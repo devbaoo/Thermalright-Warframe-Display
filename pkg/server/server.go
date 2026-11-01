@@ -74,6 +74,32 @@ func (s *Server) SetPreviewImage(img image.Image) {
 func (s *Server) Start() error {
 	mux := http.NewServeMux()
 
+	// Favicon & Web Manifest explicitly served for crisp taskbar & window icons
+	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/x-icon")
+		data, err := fs.ReadFile(s.webFS, "favicon.ico")
+		if err == nil {
+			_, _ = w.Write(data)
+			return
+		}
+		data2, err2 := fs.ReadFile(s.assetsFS, "app_icon.ico")
+		if err2 == nil {
+			_, _ = w.Write(data2)
+			return
+		}
+		http.NotFound(w, r)
+	})
+
+	mux.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/manifest+json")
+		data, err := fs.ReadFile(s.webFS, "manifest.json")
+		if err == nil {
+			_, _ = w.Write(data)
+			return
+		}
+		http.NotFound(w, r)
+	})
+
 	// Static web assets
 	mux.Handle("/", http.FileServer(http.FS(s.webFS)))
 

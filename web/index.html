@@ -3,7 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thermalright Frozen Warframe 360 SE - Display Controller</title>
+  <title>Thermalright Frozen Warframe 360 SE</title>
+  
+  <!-- Web App & Taskbar Custom Icons -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icon_32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="/assets/icon_64.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="/assets/icon_128.png">
+  <link rel="icon" type="image/png" sizes="256x256" href="/assets/icon_256.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/assets/icon_512.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/icon_256.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0B0D11">
+  <meta name="application-name" content="Thermalright Warframe Display">
   <style>
     :root {
       --bg-base: #0B0D11;
@@ -82,15 +94,28 @@
     }
 
     .brand-logo {
-      width: 30px;
-      height: 30px;
-      border-radius: var(--radius-sm);
-      background: linear-gradient(135deg, #1E293B, #0F172A);
-      border: 1px solid var(--border-strong);
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      box-shadow: 0 0 15px rgba(0, 210, 255, 0.2), inset 0 0 10px rgba(0, 210, 255, 0.1);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--accent);
+      overflow: hidden;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .brand-logo:hover {
+      border-color: rgba(56, 189, 248, 0.6);
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.35);
+    }
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .brand-info {
@@ -100,8 +125,11 @@
 
     .brand-title {
       font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      background: linear-gradient(135deg, #FFFFFF 20%, #38BDF8 70%, #3B82F6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -109,12 +137,37 @@
 
     .brand-version {
       font-size: 10px;
-      font-weight: 600;
+      font-weight: 700;
       padding: 1px 6px;
       border-radius: 4px;
-      background: var(--accent-subtle);
-      color: var(--accent);
-      letter-spacing: 0;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38BDF8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      -webkit-text-fill-color: #38BDF8;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-model {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .status-pulse-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+      animation: pulseDot 2s infinite;
+    }
+    @keyframes pulseDot {
+      0% { opacity: 0.6; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 12px #10B981; }
+      100% { opacity: 0.6; transform: scale(0.95); }
     }
 
     .brand-model {
@@ -736,19 +789,18 @@
   <!-- Top App Navigation -->
   <header>
     <div class="brand-section">
-      <div class="brand-logo">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-          <line x1="8" y1="21" x2="16" y2="21"></line>
-          <line x1="12" y1="17" x2="12" y2="21"></line>
-        </svg>
+      <div class="brand-logo" title="Thermalright Frozen Warframe">
+        <img src="/assets/app_icon.png" alt="Thermalright Warframe Logo">
       </div>
       <div class="brand-info">
         <div class="brand-title">
           THERMALRIGHT WARFRAME 360 SE
-          <span class="brand-version">NATIVE</span>
+          <span class="brand-version">NATIVE GO</span>
         </div>
-        <div class="brand-model">ARGB Display Controller • USB Direct (0416:5302)</div>
+        <div class="brand-model">
+          <span class="status-pulse-dot"></span>
+          <span>ARGB LCD Display Controller • USB Direct (0416:5302)</span>
+        </div>
       </div>
     </div>
 
