@@ -137,8 +137,9 @@ class WarframeControllerApp:
         fit = self.config.get("fit_mode", "fill")
         fps = self.config.get("fps_override", 20)
         bri = self.config.get("brightness", 1.0)
+        mount = self.config.get("mount_mode", "landscape")
         if os.path.exists(last_file):
-            self.processor.load_file(last_file, rotation=rot, fit_mode=fit, brightness=bri, fps_override=fps)
+            self.processor.load_file(last_file, rotation=rot, fit_mode=fit, brightness=bri, fps_override=fps, mount_mode=mount)
 
     def start(self, minimized=False):
         logger.info("Initializing Thermalright Frozen Warframe Controller...")
@@ -196,12 +197,14 @@ class WarframeControllerApp:
                 if overlay_en:
                     stats = self.monitor.get_stats()
                     pos = self.config.get("overlay_position", "bottom")
+                    style = self.config.get("overlay_style", "badges")
                     pil_preview, rgb565_bytes = self.processor.render_overlay_frame(
                         self.current_frame_index,
                         cpu_usage=stats["cpu_usage"],
                         cpu_temp=stats["gpu_temp"],
                         ram_usage=stats["ram_usage"],
-                        position=pos
+                        position=pos,
+                        style=style
                     )
                 else:
                     pil_preview = frame_data.preview_image

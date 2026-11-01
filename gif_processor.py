@@ -1,8 +1,8 @@
 """
 GIF and Image Processor for Thermalright Frozen Warframe LCD.
-Handles frame extraction, transparency blending, resizing, rotation,
-caching, and hardware metric overlays.
-Thread-safe and guaranteed true WYSIWYG preview matching physical cooler display.
+Handles frame extraction, transparency blending, resizing, true clockwise rotation,
+caching, and ultra-professional hardware metric overlays.
+Thread-safe and guaranteed 100% WYSIWYG preview matching physical cooler display.
 """
 
 import os
@@ -15,6 +15,10 @@ import numpy as np
 # Physical panel resolution is 240x320
 PANEL_W = 240
 PANEL_H = 320
+
+# Standard Windows Font Paths for High-End Telemetry
+FONT_VAL_PATH = r"C:\Windows\Fonts\bahnschrift.ttf"
+FONT_LBL_PATH = r"C:\Windows\Fonts\segoeuib.ttf"
 
 class ProcessedFrame:
     def __init__(self, preview_image: Image.Image, hardware_image: Image.Image, rgb565_bytes: bytes, duration_ms: int):
@@ -32,12 +36,21 @@ class GifProcessor:
         self.frame_durations: List[int] = []
         self.is_animated: bool = False
         self.total_frames: int = 0
-        self.rotation: int = 0          # 0, 90, 180, 270 degrees
-        self.fit_mode: str = "fill"     # "fill", "fit", "stretch"
-        self.brightness: float = 1.0    # 0.1 to 1.0
+        self.mount_mode: str = "landscape"  # "landscape" (320x240) or "portrait" (240x320)
+        self.rotation: int = 0              # 0, 90, 180, 270 degrees clockwise
+        self.fit_mode: str = "fill"         # "fill", "fit", "stretch"
+        self.brightness: float = 1.0        # 0.1 to 1.0
         self.fps_override: Optional[int] = 20
 
-    def load_file(self, filepath: str, rotation: int = 0, fit_mode: str = "fill", brightness: float = 1.0, fps_override: Optional[int] = 20) -> bool:
+        # Load fonts once
+        try:
+            self._font_val = ImageFont.truetype(FONT_VAL_PATH, 14) if os.path.exists(FONT_VAL_PATH) else ImageFont.load_default()
+            self._font_lbl = ImageFont.truetype(FONT_LBL_PATH, 9) if os.path.exists(FONT_LBL_PATH) else ImageFont.load_default()
+        except Exception:
+            self._font_val = ImageFont.load_default()
+            self._font_lbl = ImageFont.load_default()
+
+    def load_file(self, filepath: str, rotation: int = 0, fit_mode: str = "fill", brightness: float = 1.0, fps_override: Optional[int] = 20, mount_mode: str = "landscape") -> bool:
         """Load and process an image or animated GIF file."""
         if not os.path.exists(filepath):
             return False
@@ -61,6 +74,7 @@ class GifProcessor:
 
             with self._lock:
                 self.current_filepath = filepath
+                self.mount_mode = mount_mode
                 self.rotation = rotation
                 self.fit_mode = fit_mode
                 self.brightness = brightness
@@ -77,11 +91,21 @@ class GifProcessor:
             return False
 
     def set_rotation(self, rotation: int):
+        """Sets clockwise rotation angle (0, 90, 180, 270). Rotates image content directly."""
         if rotation in (0, 90, 180, 270):
             with self._lock:
                 if self.rotation == rotation:
                     return
                 self.rotation = rotation
+            self._reprocess_frames()
+
+    def set_mount_mode(self, mount_mode: str):
+        """Sets cooler physical mount orientation: 'landscape' (320x240) or 'portrait' (240x320)."""
+        if mount_mode in ("landscape", "portrait"):
+            with self._lock:
+                if self.mount_mode == mount_mode:
+                    return
+                self.mount_mode = mount_mode
             self._reprocess_frames()
 
     def set_fit_mode(self, fit_mode: str):
@@ -107,60 +131,67 @@ class GifProcessor:
             self.fps_override = fps
         self._reprocess_frames()
 
-    def _get_logical_dimensions(self) -> Tuple[int, int]:
-        """
-        Returns (view_w, view_h) of what the user physically sees:
-        0° and 180°: Landscape (320, 240)
-        90° and 270°: Portrait (240, 320)
-        """
-        if self.rotation in (90, 270):
+    def _get_canvas_dimensions(self) -> Tuple[int, int]:
+        """Returns the logical screen dimensions based on cooler mounting mode."""
+        if self.mount_mode == "portrait":
             return 240, 320
         return 320, 240
 
-    def _scale_to_view(self, img: Image.Image, view_w: int, view_h: int) -> Image.Image:
-        """Scales source image to logical viewable canvas according to fit_mode."""
+    def _scale_and_rotate_to_view(self, img: Image.Image, canvas_w: int, canvas_h: int) -> Image.Image:
+        """
+        Scales the source image into the screen canvas according to fit_mode,
+        then rotates the image content clockwise by self.rotation degrees.
+        """
         src_w, src_h = img.size
 
+        # If rotation is 90 or 270, the intermediate fit canvas has swapped dimensions
+        if self.rotation in (90, 270):
+            fit_w, fit_h = canvas_h, canvas_w
+        else:
+            fit_w, fit_h = canvas_w, canvas_h
+
         if self.fit_mode == "stretch":
-            return img.resize((view_w, view_h), Image.Resampling.BILINEAR)
+            canvas = img.resize((fit_w, fit_h), Image.Resampling.BILINEAR)
 
         elif self.fit_mode == "fit":
-            ratio = min(view_w / src_w, view_h / src_h)
+            ratio = min(fit_w / src_w, fit_h / src_h)
             new_w = max(1, int(src_w * ratio))
             new_h = max(1, int(src_h * ratio))
             scaled = img.resize((new_w, new_h), Image.Resampling.BILINEAR)
-            canvas = Image.new("RGB", (view_w, view_h), (0, 0, 0))
-            ox = (view_w - new_w) // 2
-            oy = (view_h - new_h) // 2
+            canvas = Image.new("RGB", (fit_w, fit_h), (0, 0, 0))
+            ox = (fit_w - new_w) // 2
+            oy = (fit_h - new_h) // 2
             canvas.paste(scaled, (ox, oy))
-            return canvas
 
         else:  # "fill" (Center crop to prevent black bars)
-            ratio = max(view_w / src_w, view_h / src_h)
+            ratio = max(fit_w / src_w, fit_h / src_h)
             new_w = max(1, int(src_w * ratio))
             new_h = max(1, int(src_h * ratio))
             scaled = img.resize((new_w, new_h), Image.Resampling.BILINEAR)
-            cx = (new_w - view_w) // 2
-            cy = (new_h - view_h) // 2
-            return scaled.crop((cx, cy, cx + view_w, cy + view_h))
+            cx = (new_w - fit_w) // 2
+            cy = (new_h - fit_h) // 2
+            canvas = scaled.crop((cx, cy, cx + fit_w, cy + fit_h))
+
+        # Rotate clockwise by self.rotation
+        # PIL rotate is counter-clockwise, so -rotation % 360 rotates clockwise!
+        if self.rotation != 0:
+            rotated = canvas.rotate(-self.rotation % 360, expand=True)
+            if rotated.size != (canvas_w, canvas_h):
+                rotated = rotated.resize((canvas_w, canvas_h), Image.Resampling.BILINEAR)
+            return rotated
+
+        return canvas
 
     def _map_view_to_hardware(self, view_img: Image.Image) -> Image.Image:
         """
         Maps the logical viewable image (what user sees) to the physical 240x320 panel raster.
-        Panel physical scanline order is 240x320 portrait:
-          - At 0° (Landscape standard): rotate 270° (90° clockwise) -> (240, 320)
-          - At 180° (Landscape inverted): rotate 90° (90° counter-clockwise) -> (240, 320)
-          - At 90° (Portrait standard): image is (240, 320) -> no rotation
-          - At 270° (Portrait inverted): image is (240, 320) -> rotate 180° -> (240, 320)
+        For Landscape (320x240):
+          Rotating 270° in PIL (90° clockwise) maps 320x240 to 240x320.
+        For Portrait (240x320):
+          Already 240x320.
         """
-        if self.rotation == 0:
-            hw = view_img.rotate(270, expand=True)
-        elif self.rotation == 180:
-            hw = view_img.rotate(90, expand=True)
-        elif self.rotation == 90:
+        if self.mount_mode == "portrait":
             hw = view_img
-        elif self.rotation == 270:
-            hw = view_img.rotate(180)
         else:
             hw = view_img.rotate(270, expand=True)
 
@@ -184,7 +215,7 @@ class GifProcessor:
         return (r | g | b).astype("<u2").tobytes()
 
     def _reprocess_frames(self):
-        """Thread-safe batch pre-processing of all frames."""
+        """Thread-safe batch pre-processing of all frames with atomic swap."""
         with self._lock:
             orig_frames = list(self.original_frames)
             durations = list(self.frame_durations)
@@ -193,15 +224,15 @@ class GifProcessor:
         if not orig_frames:
             return
 
-        view_w, view_h = self._get_logical_dimensions()
+        canvas_w, canvas_h = self._get_canvas_dimensions()
         override_dur_ms = int(1000 / fps_override) if fps_override and fps_override > 0 else None
 
         new_frames = []
         for idx, orig in enumerate(orig_frames):
-            # 1. Scale into logical viewable size
-            view_img = self._scale_to_view(orig, view_w, view_h)
+            # 1. Scale and apply clockwise rotation into viewable canvas
+            view_img = self._scale_and_rotate_to_view(orig, canvas_w, canvas_h)
 
-            # 2. Map logical viewable to physical 240x320 panel
+            # 2. Map viewable image to physical 240x320 panel
             hw_img = self._map_view_to_hardware(view_img)
 
             # 3. Convert to RGB565 byte buffer
@@ -226,10 +257,18 @@ class GifProcessor:
                 return None
             return self.frames[index % len(self.frames)]
 
-    def render_overlay_frame(self, index: int, cpu_usage: float = 0.0, cpu_temp: Optional[float] = None, ram_usage: float = 0.0, position: str = "bottom") -> Tuple[Image.Image, bytes]:
+    def render_overlay_frame(
+        self,
+        index: int,
+        cpu_usage: float = 0.0,
+        cpu_temp: Optional[float] = None,
+        ram_usage: float = 0.0,
+        position: str = "bottom",
+        style: str = "badges"
+    ) -> Tuple[Image.Image, bytes]:
         """
-        Renders hardware overlay on top of logical frame, then maps to hardware raster.
-        Guarantees text is right-side up and positioned identically on preview and LCD.
+        Renders a stunning, high-end PC enthusiast telemetry overlay onto the frame.
+        Uses Bahnschrift / Segoe UI Bold typography, frosted cards, and accent indicators.
         Returns: (wysiwyg_preview_image, rgb565_bytes)
         """
         frame = self.get_frame(index)
@@ -237,44 +276,65 @@ class GifProcessor:
             blank = Image.new("RGB", (PANEL_W, PANEL_H), (0, 0, 0))
             return blank, self._pil_to_rgb565(blank)
 
-        # Clone logical viewable image
+        # Clone viewable image
         preview_img = frame.preview_image.copy()
-        draw = ImageDraw.Draw(preview_img)
-        view_w, view_h = preview_img.size
+        w, h = preview_img.size
 
-        # Build stats text
-        parts = [f"CPU: {cpu_usage:.0f}%"]
-        if cpu_temp is not None and cpu_temp > 0:
-            parts.append(f"{cpu_temp:.0f}°C")
-        parts.append(f"RAM: {ram_usage:.0f}%")
-        stats_text = " | ".join(parts)
+        # Create transparent overlay layer for alpha composite
+        overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(overlay)
 
-        # Calculate banner positioning in logical viewable coordinates
-        banner_h = 24
-        pad_x = 12
-        if position == "top":
-            banner_y = 8
-        elif position == "center":
-            banner_y = (view_h - banner_h) // 2
-        else:  # "bottom"
-            banner_y = view_h - banner_h - 8
+        # Telemetry metrics data
+        gpu_str = f"{cpu_temp:.0f}°C" if cpu_temp and cpu_temp > 0 else "--°C"
+        items = [
+            ("CPU", f"{cpu_usage:.0f}%", (59, 130, 246)),      # Sapphire
+            ("GPU", gpu_str, (245, 158, 11)),                   # Amber
+            ("RAM", f"{ram_usage:.0f}%", (16, 185, 129))        # Emerald
+        ]
 
-        pill_rect = [pad_x, banner_y, view_w - pad_x, banner_y + banner_h]
+        if style == "strip":
+            # Sleek Telemetry Ribbon with Accent Line
+            strip_h = 30
+            y = h - strip_h - 8 if position == "bottom" else (8 if position == "top" else (h - strip_h) // 2)
+            pad = 12
 
-        # Draw clean dark pill with subtle border
-        draw.rounded_rectangle(pill_rect, radius=6, fill=(12, 16, 24, 215), outline=(59, 130, 246, 230), width=1)
-        
-        # Draw centered stats text
-        # PIL text size approximation
-        text_bbox = draw.textbbox((0, 0), stats_text)
-        text_w = text_bbox[2] - text_bbox[0]
-        text_h = text_bbox[3] - text_bbox[1]
-        text_x = (view_w - text_w) // 2
-        text_y = banner_y + (banner_h - text_h) // 2 - 1
-        draw.text((text_x, text_y), stats_text, fill=(245, 247, 250))
+            # Background card with soft border
+            draw.rounded_rectangle([pad, y, w - pad, y + strip_h], radius=7, fill=(10, 13, 19, 230), outline=(38, 48, 64, 255), width=1)
+            # Top accent line
+            draw.rounded_rectangle([pad + 2, y, w - pad - 2, y + 2], radius=1, fill=(59, 130, 246, 255))
 
-        # Map composite logical image to hardware LCD raster
-        hw_img = self._map_view_to_hardware(preview_img)
+            col_w = (w - pad * 2) // 3
+            for i, (label, val, accent) in enumerate(items):
+                cx = pad + i * col_w + 12
+                draw.text((cx, y + 8), f"{label}", font=self._font_lbl, fill=(148, 163, 184))
+                draw.text((cx + 28, y + 6), val, font=self._font_val, fill=(245, 247, 250))
+
+        else:
+            # Modern Triple Frosted Badges (Default - NZXT / Lian Li aesthetic)
+            badge_w = 88 if w >= 300 else 68
+            badge_h = 32
+            gap = 6
+            start_x = (w - (badge_w * 3 + gap * 2)) // 2
+            y = h - badge_h - 10 if position == "bottom" else (10 if position == "top" else (h - badge_h) // 2)
+
+            for i, (label, val, accent) in enumerate(items):
+                bx = start_x + i * (badge_w + gap)
+
+                # Ambient drop shadow
+                draw.rounded_rectangle([bx + 1, y + 2, bx + badge_w + 1, y + badge_h + 2], radius=7, fill=(0, 0, 0, 140))
+                # Frosted glass card
+                draw.rounded_rectangle([bx, y, bx + badge_w, y + badge_h], radius=7, fill=(11, 14, 21, 230), outline=(42, 52, 70, 255), width=1)
+                # Vertical accent indicator bar
+                draw.rounded_rectangle([bx + 7, y + 7, bx + 10, y + badge_h - 7], radius=2, fill=accent)
+                # Metric labels & high-contrast values
+                draw.text((bx + 16, y + 4), label, font=self._font_lbl, fill=(148, 163, 184))
+                draw.text((bx + 16, y + 14), val, font=self._font_val, fill=(245, 247, 250))
+
+        # Composite overlay on viewable image
+        composite_view = Image.alpha_composite(preview_img.convert("RGBA"), overlay).convert("RGB")
+
+        # Map to physical hardware LCD raster
+        hw_img = self._map_view_to_hardware(composite_view)
         rgb565 = self._pil_to_rgb565(hw_img)
 
-        return preview_img, rgb565
+        return composite_view, rgb565

@@ -850,24 +850,26 @@
         </div>
 
         <div>
-          <div class="field-label">Góc xoay màn hình (Orientation):</div>
+          <div class="field-label">Hướng lắp đặt tản nhiệt (Mount Orientation):</div>
+          <div class="segmented-control seg-2" id="mountControl">
+            <button class="seg-btn active" onclick="setMountMode('landscape')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
+              Lắp Ngang (320 × 240)
+            </button>
+            <button class="seg-btn" onclick="setMountMode('portrait')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/></svg>
+              Lắp Dọc (240 × 320)
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="field-label">Góc xoay nội dung (Content Rotation):</div>
           <div class="segmented-control seg-4" id="rotControl">
-            <button class="seg-btn active" onclick="setRotation(0)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              0° (Ngang)
-            </button>
-            <button class="seg-btn" onclick="setRotation(90)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-              90° (Dọc)
-            </button>
-            <button class="seg-btn" onclick="setRotation(180)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              180°
-            </button>
-            <button class="seg-btn" onclick="setRotation(270)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M19 12l-7-7-7 7"/></svg>
-              270°
-            </button>
+            <button class="seg-btn active" onclick="setRotation(0)">0°</button>
+            <button class="seg-btn" onclick="setRotation(90)">90°</button>
+            <button class="seg-btn" onclick="setRotation(180)">180°</button>
+            <button class="seg-btn" onclick="setRotation(270)">270°</button>
           </div>
         </div>
 
@@ -940,6 +942,20 @@
             <input type="checkbox" id="swOverlay" onchange="onOverlayToggle()">
             <span class="switch-slider"></span>
           </label>
+        </div>
+
+        <div>
+          <div class="field-label">Kiểu hiển thị HUD:</div>
+          <div class="segmented-control seg-2" id="overlayStyleControl">
+            <button class="seg-btn active" onclick="setOverlayStyle('badges')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="8" y="14" width="7" height="7"/></svg>
+              3 Thẻ Rời (Badges Pro)
+            </button>
+            <button class="seg-btn" onclick="setOverlayStyle('strip')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="2"/></svg>
+              Thanh Dải (Ribbon Strip)
+            </button>
+          </div>
         </div>
 
         <div>
@@ -1036,11 +1052,13 @@
     let initialSyncDone = false;
     let appState = {
       rotation: 0,
+      mount_mode: 'landscape',
       fit_mode: 'fill',
       fps: 20,
       brightness: 100,
       overlay_enabled: false,
-      overlay_position: 'bottom'
+      overlay_position: 'bottom',
+      overlay_style: 'badges'
     };
 
     function showToast(msg) {
@@ -1060,16 +1078,23 @@
         if (!initialSyncDone) {
           initialSyncDone = true;
           appState.rotation = data.rotation;
+          appState.mount_mode = data.mount_mode || 'landscape';
           appState.fit_mode = data.fit_mode;
           appState.fps = data.fps;
           appState.brightness = data.brightness;
           appState.overlay_enabled = data.overlay_enabled;
           appState.overlay_position = data.overlay_position;
+          appState.overlay_style = data.overlay_style || 'badges';
 
-          // Apply initial orientation UI
-          const isPortrait = (data.rotation === 90 || data.rotation === 270);
+          // Apply initial mount orientation UI
+          const isPortrait = (appState.mount_mode === 'portrait');
           document.getElementById('screenPanel').classList.toggle('portrait', isPortrait);
           document.getElementById('screenRes').innerText = isPortrait ? '240 × 320 (Dọc)' : '320 × 240 (Ngang)';
+          document.querySelectorAll('#mountControl .seg-btn').forEach(b => {
+            b.classList.toggle('active', b.innerText.toLowerCase().includes(isPortrait ? 'dọc' : 'ngang'));
+          });
+
+          // Apply initial rotation buttons
           document.getElementById('hudRot').innerText = data.rotation + '°';
           const rotButtons = document.querySelectorAll('#rotControl .seg-btn');
           [0, 90, 180, 270].forEach((d, idx) => {
@@ -1094,6 +1119,13 @@
           document.querySelectorAll('#overlayPosControl .seg-btn').forEach(b => {
             b.classList.toggle('active', b.innerText.toLowerCase().includes(
               data.overlay_position === 'bottom' ? 'dưới' : (data.overlay_position === 'top' ? 'trên' : 'giữa')
+            ));
+          });
+
+          // Apply overlay style
+          document.querySelectorAll('#overlayStyleControl .seg-btn').forEach(b => {
+            b.classList.toggle('active', b.innerText.toLowerCase().includes(
+              appState.overlay_style === 'strip' ? 'dải' : 'thẻ'
             ));
           });
         }
@@ -1175,7 +1207,24 @@
     setInterval(updateStatus, 1500);
     updateStatus();
 
-    // Orientation change
+    // Mount Orientation change (Hardware Mounting geometry)
+    async function setMountMode(mode) {
+      appState.mount_mode = mode;
+      const isPortrait = (mode === 'portrait');
+      document.getElementById('screenPanel').classList.toggle('portrait', isPortrait);
+      document.getElementById('screenRes').innerText = isPortrait ? '240 × 320 (Dọc)' : '320 × 240 (Ngang)';
+      document.querySelectorAll('#mountControl .seg-btn').forEach(b => {
+        b.classList.toggle('active', b.innerText.toLowerCase().includes(isPortrait ? 'dọc' : 'ngang'));
+      });
+      await fetch('/api/set_mount_mode', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({mount_mode: mode})
+      });
+      showToast(`Đã đổi hướng lắp: ${isPortrait ? 'Lắp Dọc (240×320)' : 'Lắp Ngang (320×240)'}`);
+    }
+
+    // Orientation change (Clockwise Content Rotation)
     async function setRotation(deg) {
       appState.rotation = deg;
       
@@ -1184,14 +1233,6 @@
       [0, 90, 180, 270].forEach((d, idx) => {
         if (rotButtons[idx]) rotButtons[idx].classList.toggle('active', d === deg);
       });
-
-      // Update Screen orientation aspect ratio
-      const panel = document.getElementById('screenPanel');
-      const resLabel = document.getElementById('screenRes');
-      const isPortrait = (deg === 90 || deg === 270);
-
-      panel.classList.toggle('portrait', isPortrait);
-      resLabel.innerText = isPortrait ? '240 × 320 (Dọc)' : '320 × 240 (Ngang)';
       document.getElementById('hudRot').innerText = deg + '°';
 
       await fetch('/api/set_rotation', {
@@ -1199,7 +1240,7 @@
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({rotation: deg})
       });
-      showToast(`Đã đổi góc xoay ${deg}°`);
+      showToast(`Đã xoay nội dung: ${deg}°`);
     }
 
     function quickRotate() {
@@ -1257,7 +1298,11 @@
       await fetch('/api/set_overlay', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({enabled: en, position: appState.overlay_position})
+        body: JSON.stringify({
+          enabled: en,
+          position: appState.overlay_position,
+          style: appState.overlay_style
+        })
       });
       showToast(en ? "Đã bật lớp phủ thông số" : "Đã tắt lớp phủ thông số");
     }
@@ -1271,8 +1316,30 @@
       await fetch('/api/set_overlay', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({enabled: en, position: pos})
+        body: JSON.stringify({
+          enabled: en,
+          position: pos,
+          style: appState.overlay_style
+        })
       });
+    }
+
+    async function setOverlayStyle(style) {
+      appState.overlay_style = style;
+      document.querySelectorAll('#overlayStyleControl .seg-btn').forEach(b => {
+        b.classList.toggle('active', b.innerText.toLowerCase().includes(style === 'strip' ? 'dải' : 'thẻ'));
+      });
+      const en = document.getElementById('swOverlay').checked;
+      await fetch('/api/set_overlay', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          enabled: en,
+          position: appState.overlay_position,
+          style: style
+        })
+      });
+      showToast(`Đã áp dụng kiểu HUD: ${style === 'strip' ? 'Thanh Dải LED' : '3 Thẻ Rời'}`);
     }
 
     // Preset selection

@@ -15,11 +15,13 @@ APP_NAME = "WarframeAIO_Display"
 DEFAULT_CONFIG: Dict[str, Any] = {
     "last_file": "",
     "rotation": 0,
+    "mount_mode": "landscape",
     "fit_mode": "fill",
     "brightness": 1.0,
     "fps_override": 20,
     "overlay_enabled": False,
     "overlay_position": "bottom",
+    "overlay_style": "badges",
     "minimize_to_tray": True,
     "autostart": False
 }

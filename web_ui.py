@@ -82,8 +82,10 @@ class WebUIServer:
                 "fit_mode": self.config.get("fit_mode", "fill"),
                 "fps": self.config.get("fps_override", 20),
                 "brightness": int(self.config.get("brightness", 1.0) * 100),
+                "mount_mode": self.config.get("mount_mode", "landscape"),
                 "overlay_enabled": self.config.get("overlay_enabled", False),
                 "overlay_position": self.config.get("overlay_position", "bottom"),
+                "overlay_style": self.config.get("overlay_style", "badges"),
                 "autostart": self.config.get("autostart", False),
                 "trcc_running": trcc_running,
                 "stats": stats,
@@ -133,10 +135,22 @@ class WebUIServer:
         def set_overlay():
             data = request.json or {}
             enabled = bool(data.get("enabled", False))
-            pos = data.get("position", "bottom")
+            pos = data.get("position", self.config.get("overlay_position", "bottom"))
+            style = data.get("style", self.config.get("overlay_style", "badges"))
             self.config.set("overlay_enabled", enabled)
             self.config.set("overlay_position", pos)
-            return {"status": "ok", "enabled": enabled, "position": pos}
+            self.config.set("overlay_style", style)
+            return {"status": "ok", "enabled": enabled, "position": pos, "style": style}
+
+        @app.route("/api/set_mount_mode", method="POST")
+        def set_mount_mode():
+            data = request.json or {}
+            mode = data.get("mount_mode", "landscape")
+            if mode in ("landscape", "portrait"):
+                self.processor.set_mount_mode(mode)
+                self.config.set("mount_mode", mode)
+                return {"status": "ok", "mount_mode": mode}
+            return {"status": "error", "message": "Invalid mount mode"}
 
         @app.route("/api/select_preset", method="POST")
         def select_preset():
@@ -212,7 +226,8 @@ class WebUIServer:
         fit = self.config.get("fit_mode", "fill")
         fps = self.config.get("fps_override", 20)
         bri = self.config.get("brightness", 1.0)
-        if self.processor.load_file(path, rotation=rot, fit_mode=fit, brightness=bri, fps_override=fps):
+        mount = self.config.get("mount_mode", "landscape")
+        if self.processor.load_file(path, rotation=rot, fit_mode=fit, brightness=bri, fps_override=fps, mount_mode=mount):
             self.config.set("last_file", path)
 
     def start(self):
